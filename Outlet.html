@@ -1,0 +1,111 @@
+<!-- =============================================================== -->
+<!-- TAB: MANAJEMEN OUTLET (Full CRUD) -->
+<!-- =============================================================== -->
+<section id="tab-outlet" class="tab-content hidden space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-base font-extrabold text-slate-900">Manajemen & Verifikasi Outlet</h2>
+            <p class="text-xs text-slate-500">Daftar toko, link Google Maps, radius kunjungan, dan
+                area absensi.</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="exportOutletToExcel()"
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center gap-2 w-fit transition-all cursor-pointer"
+                title="Download data outlet ke file Excel (.xlsx)">
+                <i class="fa-solid fa-file-excel text-sm"></i>
+                <span>Download Excel</span>
+            </button>
+            <button onclick="openModalTambahOutlet()"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-2 w-fit">
+                <i class="fa-solid fa-plus"></i>
+                <span>Tambah Outlet Baru</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Controls: Search, Filter Wilayah, Refresh -->
+    <div
+        class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1">
+            <div class="w-full sm:w-72 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" onkeyup="setTableSearch('outlet', this.value)"
+                    placeholder="Cari nama toko / kode / pemilik..."
+                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+
+            <!-- Filter Area / Wilayah -->
+            <select id="filter-outlet-wilayah" onchange="setTableWilayahFilter('outlet', this.value)"
+                class="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                <option value="SEMUA">Semua Wilayah</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button type="button" onclick="exportOutletToExcel()"
+                class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                title="Download data outlet yang sedang difilter/ditampilkan ke file Excel">
+                <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                <span>Download Excel</span>
+            </button>
+            <button type="button" onclick="repairDuplicateOutletCodesPrompt()"
+                class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                title="Perbaiki dan rapikan jika ada Kode Outlet yang ganda">
+                <i class="fa-solid fa-wrench"></i>
+                <span>Rapikan Kode Ganda</span>
+            </button>
+            <button onclick="loadInitialData()"
+                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th onclick="changeTableSort('outlet', 'Kode Outlet')"
+                            class="sortable-th p-4">Kode <i
+                                class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                        <th onclick="changeTableSort('outlet', 'Nama Toko')"
+                            class="sortable-th p-4">Nama Toko <i
+                                class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                        <th class="p-4">Pemilik / Kontak</th>
+                        <th onclick="changeTableSort('outlet', 'Kode Wilayah')"
+                            class="sortable-th p-4">Wilayah <i
+                                class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                        <th class="p-4">Link Maps</th>
+                        <th class="p-4">Radius</th>
+                        <th class="p-4">Area Absen</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="table-outlet-body" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div
+            class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <span id="pagination-info-outlet" class="text-slate-500 font-medium">Menampilkan 0
+                data</span>
+            <div class="flex items-center gap-2">
+                <button id="btn-prev-outlet" onclick="changeTablePage('outlet', -1)"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700">
+                    <i class="fa-solid fa-chevron-left mr-1"></i> Sebelumnya
+                </button>
+                <button id="btn-next-outlet" onclick="changeTablePage('outlet', 1)"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700">
+                    Selanjutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>

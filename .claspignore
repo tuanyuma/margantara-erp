@@ -1,0 +1,10 @@
+# Clasp Ignore - File yang tidak boleh di-push ke Google Apps Script
+dist/**
+node_modules/**
+.git/**
+package.json
+package-lock.json
+build.js
+vercel.json
+README.md
+.gitignore

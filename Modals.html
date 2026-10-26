@@ -1,0 +1,1166 @@
+
+<!-- ========================================================================= -->
+<!-- MODAL: POP-UP FILTER PERIODE DENGAN 4 OPSI (RENTANG TANGGAL, BULAN, TAHUN, SEMUA DATA) -->
+<!-- ========================================================================= -->
+<div id="modal-period-filter"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-sm font-extrabold text-slate-900" id="period-filter-title">Filter Rentang Periode</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Pilih salah satu dari 4 opsi filter di bawah ini.</p>
+            </div>
+            <button onclick="closeModal('modal-period-filter')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- 4 Mode Selection Tabs -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl">
+            <button type="button" id="btn-period-tab-range" onclick="switchPeriodFilterTab('range')"
+                class="py-2 px-2 rounded-xl text-[11px] font-bold bg-indigo-600 text-white shadow-2xs transition-all flex flex-col items-center gap-0.5 text-center">
+                <i class="fa-solid fa-calendar-days text-xs"></i>
+                <span>Rentang</span>
+            </button>
+            <button type="button" id="btn-period-tab-month" onclick="switchPeriodFilterTab('month')"
+                class="py-2 px-2 rounded-xl text-[11px] font-semibold bg-transparent hover:bg-slate-200 text-slate-600 transition-all flex flex-col items-center gap-0.5 text-center">
+                <i class="fa-regular fa-calendar text-xs"></i>
+                <span>Bulan</span>
+            </button>
+            <button type="button" id="btn-period-tab-year" onclick="switchPeriodFilterTab('year')"
+                class="py-2 px-2 rounded-xl text-[11px] font-semibold bg-transparent hover:bg-slate-200 text-slate-600 transition-all flex flex-col items-center gap-0.5 text-center">
+                <i class="fa-solid fa-calendar text-xs"></i>
+                <span>Tahun</span>
+            </button>
+            <button type="button" id="btn-period-tab-all" onclick="switchPeriodFilterTab('all')"
+                class="py-2 px-2 rounded-xl text-[11px] font-semibold bg-transparent hover:bg-slate-200 text-slate-600 transition-all flex flex-col items-center gap-0.5 text-center">
+                <i class="fa-solid fa-globe text-xs"></i>
+                <span>Semua</span>
+            </button>
+        </div>
+
+        <!-- TAB CONTENT 1: RENTANG TANGGAL BEBAS -->
+        <div id="content-period-tab-range" class="space-y-3 pt-1">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Dari Tanggal (Mulai)</label>
+                <input type="date" id="period-start-date"
+                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Sampai Tanggal (Selesai)</label>
+                <input type="date" id="period-end-date"
+                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 2: PILIH BULAN & TAHUN -->
+        <div id="content-period-tab-month" class="space-y-3 pt-1 hidden">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Bulan</label>
+                <select id="filter-month-select"
+                    class="custom-select w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07">Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Tahun</label>
+                <select id="filter-month-year"
+                    class="custom-select w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"></select>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 3: PILIH TAHUN -->
+        <div id="content-period-tab-year" class="space-y-3 pt-1 hidden">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Tahun Transaksi / Kegiatan</label>
+                <select id="filter-year-only"
+                    class="custom-select w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"></select>
+            </div>
+            <p class="text-[11px] text-slate-400">Data sepanjang 1 Januari hingga 31 Desember tahun tersebut akan
+                ditampilkan.</p>
+        </div>
+
+        <!-- TAB CONTENT 4: TAMPILKAN SEMUA DATA -->
+        <div id="content-period-tab-all" class="space-y-2 pt-2 text-center hidden">
+            <div
+                class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-database"></i>
+            </div>
+            <h4 class="text-xs font-extrabold text-slate-900">Tampilkan Seluruh Data</h4>
+            <p class="text-[11px] text-slate-500">Mereset semua batasan tanggal dan memuat seluruh data dari awal.</p>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="closeModal('modal-period-filter')"
+                class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors">
+                Batal
+            </button>
+            <button type="button" onclick="applyPeriodFilter()"
+                class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30 transition-colors">
+                Terapkan Filter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: PROSES PEMBAYARAN INTERAKTIF (Cash, Transfer, QRIS) -->
+<!-- ========================================================================= -->
+<div id="modal-payment-checkout"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900">Pembayaran Transaksi</h3>
+                <p class="text-xs text-slate-500" id="pay-outlet-name">Toko: -</p>
+            </div>
+            <button onclick="closeModal('modal-payment-checkout')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Total Tagihan Banner -->
+        <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-center">
+            <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Total yang Harus Dibayar</p>
+            <h2 class="text-2xl font-extrabold text-indigo-950 mt-1" id="pay-total-tagihan">Rp 0</h2>
+        </div>
+
+        <!-- Payment Method Selection Buttons (3 Tabs) -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Metode Pembayaran</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="selectPaymentTab('Cash')" id="btn-tab-cash"
+                    class="py-2.5 px-2 rounded-2xl font-bold text-xs border transition-all flex flex-col items-center gap-1 bg-indigo-600 text-white border-indigo-600 shadow-sm">
+                    <i class="fa-solid fa-money-bill-wave text-base"></i>
+                    <span>Cash (Tunai)</span>
+                </button>
+                <button type="button" onclick="selectPaymentTab('Transfer')" id="btn-tab-transfer"
+                    class="py-2.5 px-2 rounded-2xl font-bold text-xs border transition-all flex flex-col items-center gap-1 bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50">
+                    <i class="fa-solid fa-building-columns text-base"></i>
+                    <span>Transfer Bank</span>
+                </button>
+                <button type="button" onclick="selectPaymentTab('QRIS')" id="btn-tab-qris"
+                    class="py-2.5 px-2 rounded-2xl font-bold text-xs border transition-all flex flex-col items-center gap-1 bg-slate-50 text-slate-600 border-slate-200 hover:bg-indigo-50">
+                    <i class="fa-solid fa-qrcode text-base"></i>
+                    <span>QRIS Digital</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: CASH -->
+        <div id="payment-content-cash" class="space-y-3 pt-1">
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Jumlah Uang Diterima (Rp)</label>
+                <input type="number" id="pay-cash-input" oninput="calculateCashChange()" placeholder="0"
+                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-3 gap-1.5" id="quick-cash-buttons">
+                <button type="button" onclick="setCashAmount('pas')"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">Uang Pas</button>
+                <button type="button" onclick="setCashAmount(50000)"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">50.000</button>
+                <button type="button" onclick="setCashAmount(100000)"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">100.000</button>
+                <button type="button" onclick="setCashAmount(200000)"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">200.000</button>
+                <button type="button" onclick="setCashAmount(500000)"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">500.000</button>
+                <button type="button" onclick="setCashAmount(1000000)"
+                    class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl text-[11px] font-bold text-slate-700">1.000.000</button>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-600">Uang Kembalian:</span>
+                <span class="text-sm font-extrabold text-emerald-600" id="pay-cash-change">Rp 0</span>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: TRANSFER BANK -->
+        <div id="payment-content-transfer" class="space-y-3 pt-1 hidden">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-500 font-semibold">Bank Tujuan:</span>
+                    <span class="font-bold text-slate-900" id="pay-transfer-bank">-</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-500 font-semibold">No. Rekening:</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-extrabold text-indigo-600 text-sm"
+                            id="pay-transfer-acc-no">-</span>
+                        <button type="button" onclick="copyTransferAccount()"
+                            class="p-1 text-slate-400 hover:text-indigo-600" title="Salin No Rekening">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-500 font-semibold">Atas Nama:</span>
+                    <span class="font-bold text-slate-900" id="pay-transfer-acc-name">-</span>
+                </div>
+            </div>
+            <p class="text-[11px] text-slate-400 text-center">Silakan konfirmasi jika dana transfer telah masuk ke rekening.</p>
+        </div>
+
+        <!-- TAB CONTENT: QRIS DIGITAL -->
+        <div id="payment-content-qris" class="space-y-3 pt-1 hidden text-center">
+            <div
+                class="w-48 h-48 mx-auto bg-white p-2 border-2 border-indigo-600/30 rounded-2xl shadow-sm flex items-center justify-center">
+                <img id="pay-qris-img"
+                    src=""
+                    class="w-full h-full object-contain rounded-lg" alt="QRIS">
+            </div>
+            <p class="text-[11px] font-bold text-slate-700">Scan QRIS via BCA Mobile, Mandiri Livin, GoPay, OVO, ShopeePay, Dana</p>
+        </div>
+
+        <!-- Submit Payment Button -->
+        <div class="pt-2">
+            <button type="button" onclick="confirmPOSPaymentFinal()"
+                class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check text-sm"></i>
+                <span>Konfirmasi Pembayaran LUNAS</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: STRUK / INVOICE DIGITAL KASIR -->
+<!-- ========================================================================= -->
+<div id="modal-receipt-view"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 max-h-[95vh] overflow-y-auto space-y-4">
+
+        <!-- Receipt Paper View -->
+        <div id="printable-receipt" class="receipt-paper p-5 rounded-2xl space-y-3 text-slate-800 text-xs">
+            <div class="text-center pb-3 border-b border-dashed border-slate-300">
+                <div class="w-full flex items-center justify-center mb-2">
+                    <img id="receipt-logo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                        class="max-h-14 max-w-[220px] w-auto mx-auto object-contain" alt="Logo">
+                </div>
+                <h3 class="font-extrabold text-sm text-slate-900" id="receipt-company-name">Margantara Jaya Corps</h3>
+                <p class="text-[10px] text-slate-500" id="receipt-app-title">Margantara POS System</p>
+            </div>
+
+            <!-- Metadata -->
+            <div class="space-y-1 text-[11px] pb-2 border-b border-dashed border-slate-300">
+                <div class="flex justify-between"><span class="text-slate-500">No. Faktur:</span><span
+                        class="font-mono font-bold" id="receipt-faktur-no">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Waktu:</span><span
+                        id="receipt-time">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Sales:</span><span class="font-bold"
+                        id="receipt-sales-name">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Outlet:</span><span class="font-bold"
+                        id="receipt-outlet-name">-</span></div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="py-1 space-y-2 text-[11px]" id="receipt-items-list"></div>
+
+            <!-- Totals & Payment Info -->
+            <div class="pt-2 border-t border-dashed border-slate-300 space-y-1 text-[11px]">
+                <div class="flex justify-between"><span class="text-slate-500">Subtotal</span><span
+                        class="font-bold" id="receipt-subtotal">Rp 0</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Diskon</span><span class="font-bold"
+                        id="receipt-discount">Rp 0</span></div>
+                <div class="flex justify-between text-sm font-extrabold pt-1 border-t border-slate-200">
+                    <span>TOTAL</span>
+                    <span class="text-indigo-600 font-mono" id="receipt-total-akhir">Rp 0</span>
+                </div>
+                <div class="flex justify-between pt-1"><span class="text-slate-500">Metode Bayar:</span><span
+                        class="font-bold" id="receipt-pay-method">Cash</span></div>
+                <div class="flex justify-between" id="receipt-cash-row"><span class="text-slate-500">Uang Diterima:</span><span class="font-bold" id="receipt-cash-paid">Rp 0</span></div>
+                <div class="flex justify-between" id="receipt-change-row"><span
+                        class="text-slate-500">Kembalian:</span><span class="font-bold text-emerald-600"
+                        id="receipt-cash-change">Rp 0</span></div>
+            </div>
+
+            <div class="text-center pt-3 border-t border-dashed border-slate-300">
+                <span
+                    class="inline-block px-3 py-0.5 bg-emerald-100 text-emerald-800 font-extrabold rounded-full text-[10px] tracking-wider uppercase">LUNAS</span>
+                <p class="text-[10px] text-slate-400 mt-2">Terima kasih atas pesanan Anda!</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 pt-1 no-print">
+            <button onclick="shareReceiptToWhatsApp()"
+                class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+                <span>Kirim WA</span>
+            </button>
+            <button onclick="printReceiptThermal()"
+                class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/30">
+                <i class="fa-brands fa-bluetooth-b text-sm"></i>
+                <span>Printer Bluetooth</span>
+            </button>
+            <button onclick="printReceipt()"
+                class="py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-print text-sm"></i>
+                <span>Cetak / PDF</span>
+            </button>
+            <button onclick="copyReceiptText()"
+                class="py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-200">
+                <i class="fa-solid fa-copy text-sm"></i>
+                <span>Salin Teks Nota</span>
+            </button>
+        </div>
+        <button onclick="closeModal('modal-receipt-view'); clearCart()"
+            class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs no-print">
+            Selesai / Transaksi Baru
+        </button>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- CUSTOM IN-APP CONFIRMATION POPUP -->
+<!-- ========================================================================= -->
+<div id="modal-confirm"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center space-y-4">
+        <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl"
+            id="confirm-icon-box">
+            <i class="fa-solid fa-triangle-exclamation" id="confirm-icon"></i>
+        </div>
+        <div>
+            <h3 class="text-base font-extrabold text-slate-900" id="confirm-title">Konfirmasi Hapus</h3>
+            <p class="text-xs text-slate-500 mt-1" id="confirm-message">Apakah Anda yakin ingin menghapus data ini?</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+            <button type="button" onclick="closeModal('modal-confirm')"
+                class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors">
+                Batal
+            </button>
+            <button type="button" id="confirm-btn-action"
+                class="py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-rose-600/30 transition-colors">
+                Ya, Hapus
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Kunjungan Toko (3 Foto Bukti + Catatan) -->
+<div id="modal-kunjungan-checkin"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900" id="modal-visit-title">Kunjungan Toko</h3>
+                <p id="modal-visit-dist-badge" class="text-xs font-bold text-emerald-600 mt-0.5">Jarak: 15m (Valid)</p>
+            </div>
+            <button onclick="closeModal('modal-kunjungan-checkin')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="py-4 space-y-4">
+            <!-- Tanggal & Jam Kunjungan Picker -->
+            <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        <i class="fa-regular fa-calendar text-indigo-600 mr-1"></i>Tanggal Kunjungan *
+                    </label>
+                    <input type="date" id="visit-input-tanggal" required
+                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        <i class="fa-regular fa-clock text-indigo-600 mr-1"></i>Jam Kunjungan *
+                    </label>
+                    <input type="time" id="visit-input-jam" required
+                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/50 space-y-1.5">
+                    <span class="text-[11px] font-bold text-slate-800">1. Selfie Toko</span>
+                    <div
+                        class="w-full h-28 bg-slate-200 rounded-xl overflow-hidden relative flex items-center justify-center">
+                        <img id="visit-preview-selfie" class="w-full h-full object-cover hidden" alt="Selfie">
+                        <i class="fa-solid fa-camera text-slate-400 text-lg" id="visit-icon-selfie"></i>
+                        <label
+                            class="absolute inset-0 cursor-pointer flex items-center justify-center bg-transparent">
+                            <input type="file" accept="image/*" capture="user" class="hidden"
+                                onchange="handleVisitPhotoUpload(event, 'selfie')">
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-indigo-600 font-bold text-center">Tap untuk ambil foto</p>
+                </div>
+
+                <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/50 space-y-1.5">
+                    <span class="text-[11px] font-bold text-slate-800">2. Ambil/Serah Barang</span>
+                    <div
+                        class="w-full h-28 bg-slate-200 rounded-xl overflow-hidden relative flex items-center justify-center">
+                        <img id="visit-preview-barang" class="w-full h-full object-cover hidden" alt="Barang">
+                        <i class="fa-solid fa-box text-slate-400 text-lg" id="visit-icon-barang"></i>
+                        <label
+                            class="absolute inset-0 cursor-pointer flex items-center justify-center bg-transparent">
+                            <input type="file" accept="image/*" capture="environment" class="hidden"
+                                onchange="handleVisitPhotoUpload(event, 'barang')">
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-indigo-600 font-bold text-center">Tap untuk ambil foto</p>
+                </div>
+
+                <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50/50 space-y-1.5 col-span-2">
+                    <span class="text-[11px] font-bold text-slate-800">3. Display/Etalase</span>
+                    <div
+                        class="w-full h-28 bg-slate-200 rounded-xl overflow-hidden relative flex items-center justify-center">
+                        <img id="visit-preview-display" class="w-full h-full object-cover hidden" alt="Display">
+                        <i class="fa-solid fa-store text-slate-400 text-lg" id="visit-icon-display"></i>
+                        <label
+                            class="absolute inset-0 cursor-pointer flex items-center justify-center bg-transparent">
+                            <input type="file" accept="image/*" capture="environment" class="hidden"
+                                onchange="handleVisitPhotoUpload(event, 'display')">
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-indigo-600 font-bold text-center">Tap untuk ambil foto</p>
+                </div>
+            </div>
+
+            <!-- 4. Cek Stok Toko (Etalase / Rak) -->
+            <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50/80 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-boxes-stacked text-indigo-600"></i>
+                        <span>4. Cek Stok Toko (Etalase / Rak)</span>
+                    </span>
+                    <span class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">Satuan: Bungkus</span>
+                </div>
+                <p class="text-[10px] text-slate-500">Catat sisa fisik stok rokok di toko saat check-in:</p>
+                <div id="visit-stok-toko-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto p-1 bg-white border border-slate-200/70 rounded-xl">
+                    <div class="p-2 text-center text-xs text-slate-400 col-span-full">Memuat daftar produk...</div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Kunjungan</label>
+                <textarea id="visit-input-catatan" rows="2"
+                    placeholder="Tuliskan catatan kondisi toko atau kebutuhan stok..."
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="btn-submit-visit-checkin" onclick="submitKunjunganFinal()"
+                    class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Validasi & Simpan ke Drive</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Peta Rute Kunjungan Leaflet -->
+<div id="modal-route-map"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl p-6 max-h-[95vh] flex flex-col space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-indigo-600"></i>
+                    <span>Peta Sebaran Rute Kunjungan</span>
+                </h3>
+                <p class="text-xs text-slate-500" id="route-map-subtitle">Sebaran titik outlet yang dijadwalkan</p>
+            </div>
+            <button onclick="closeModal('modal-route-map')" class="text-slate-400 hover:text-slate-600 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div
+            class="relative w-full h-96 rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
+            <div id="route-map-container" class="w-full h-full z-0"></div>
+            <button type="button" onclick="lockGPSForRouteMap()" title="Lokasi Saya"
+                class="absolute top-3 right-3 z-10 w-10 h-10 bg-white/95 hover:bg-white text-indigo-600 rounded-xl shadow-md flex items-center justify-center border border-slate-200 hover:scale-105 transition-all">
+                <i class="fa-solid fa-location-crosshairs text-base"></i>
+            </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 pt-1 gap-2">
+            <div class="flex flex-wrap items-center gap-3.5">
+                <span class="flex items-center gap-1.5 font-bold text-slate-700">
+                    <span class="w-3 h-3 rounded-full bg-rose-500 inline-block shadow-2xs"></span> Pending (Merah)
+                </span>
+                <span class="flex items-center gap-1.5 font-bold text-slate-700">
+                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block shadow-2xs"></span> Verified / Belum Dikunjungi (Kuning)
+                </span>
+                <span class="flex items-center gap-1.5 font-bold text-slate-700">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-2xs"></span> Sudah Dikunjungi &le; 7 Hari (Hijau)
+                </span>
+            </div>
+            <button type="button" onclick="closeModal('modal-route-map')"
+                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">
+                Tutup Peta
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Tambah / Edit Outlet -->
+<div id="modal-tambah-outlet"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-extrabold text-slate-900" id="modal-outlet-title">Tambah / Edit Outlet</h3>
+            <button onclick="closeModal('modal-tambah-outlet')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="handleSimpanOutlet(event)" class="py-4 space-y-3">
+            <input type="hidden" id="form-outlet-kode" value="">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Toko / Outlet *</label>
+                <input type="text" id="outlet-nama" required placeholder="Nama toko / outlet"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pemilik</label>
+                <input type="text" id="outlet-pemilik" placeholder="Nama pemilik"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp / HP</label>
+                <input type="tel" id="outlet-nohp" placeholder="08xxxxxxxxxx"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Wilayah / Area *</label>
+                <select id="outlet-wilayah" required
+                    class="custom-select w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"></select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Jadwal Hari Kunjungan *</label>
+                <select id="outlet-hari-kunjungan" required
+                    class="custom-select w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                    <option value="Senin">Senin</option>
+                    <option value="Selasa">Selasa</option>
+                    <option value="Rabu">Rabu</option>
+                    <option value="Kamis">Kamis</option>
+                    <option value="Jumat">Jumat</option>
+                    <option value="Sabtu">Sabtu</option>
+                    <option value="Minggu">Minggu</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Link Google Maps</label>
+                <input type="url" id="outlet-link-maps" oninput="handleMapsLinkInput(this.value)"
+                    placeholder="https://maps.google.com/?q=..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono">
+                <p class="text-[10px] text-slate-400 mt-0.5">Tempelkan link Google Maps untuk mendeteksi koordinat otomatis.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Lengkap</label>
+                <textarea id="outlet-alamat" rows="2" placeholder="Alamat jalan, patokan..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-700">Peta & Titik Koordinat GPS *</label>
+                    <span class="text-[10px] text-indigo-600 font-semibold">Geser pin / klik peta untuk set titik</span>
+                </div>
+                <div
+                    class="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
+                    <div id="outlet-map-container" class="w-full h-full z-0"></div>
+                    <button type="button" onclick="lockGPSForOutletMap()" title="Kunci GPS Sekarang"
+                        class="absolute top-2 right-2 z-10 w-9 h-9 bg-white/95 hover:bg-white text-indigo-600 rounded-xl shadow-md flex items-center justify-center border border-slate-200 hover:scale-105 transition-all">
+                        <i class="fa-solid fa-location-crosshairs text-base"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Radius (meter)</label>
+                    <input type="number" id="outlet-radius" value="50" min="10"
+                        class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Bisa Absen Karyawan?</label>
+                    <select id="outlet-bisa-absen"
+                        class="custom-select w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                        <option value="Tidak">Tidak</option>
+                        <option value="Ya">Ya (Area Absen)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="perm-outlet-admin-only">
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Status Verifikasi Outlet</label>
+                <select id="outlet-status-verifikasi"
+                    class="custom-select w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                    <option value="Verified">Verified (Disetujui & Aktif)</option>
+                    <option value="Pending">Pending (Menunggu Verifikasi)</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Latitude</label>
+                    <input type="text" id="outlet-lat"
+                        class="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Longitude</label>
+                    <input type="text" id="outlet-long"
+                        class="w-full px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-mono">
+                </div>
+            </div>
+            <button type="submit"
+                class="w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30">
+                Simpan Data Outlet
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Tambah / Edit Produk -->
+<div id="modal-tambah-produk"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-extrabold text-slate-900" id="modal-produk-title">Tambah / Edit Produk</h3>
+            <button onclick="closeModal('modal-tambah-produk')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="handleSimpanProduk(event)" class="py-4 space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Kode Produk *</label>
+                    <input type="text" id="form-produk-kode" required placeholder="Contoh: PSD, PSF, PRD-001"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold uppercase">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Singkatan Grafik *</label>
+                    <input type="text" id="prd-singkatan" required placeholder="Contoh: PsD, PsF, Age"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-indigo-600">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Produk *</label>
+                <input type="text" id="prd-nama" required placeholder="Contoh: Ps Djeram (PSK)"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+                <input type="text" id="prd-kategori" placeholder="ROKOK, Sembako, dll"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Harga Jual (Rp) *</label>
+                    <input type="number" id="prd-harga" required min="0"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Satuan Ecer</label>
+                    <input type="text" id="prd-satuan" required placeholder="Bks / Pcs"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-indigo-700 mb-1">Isi / Bal (Bks) *</label>
+                    <input type="number" id="prd-isi-bal" required min="1" value="200" placeholder="100 / 200"
+                        class="w-full px-3 py-2 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-700 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Stok Awal</label>
+                    <input type="number" id="prd-stok" value="100"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Bulanan</label>
+                    <input type="number" id="prd-target" value="50"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                </div>
+            </div>
+            <button type="submit"
+                class="w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30">
+                Simpan Produk
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Tambah / Edit Wilayah -->
+<div id="modal-tambah-wilayah"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[90vh] flex flex-col space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-extrabold text-slate-900" id="modal-wilayah-title">Tambah / Edit Wilayah</h3>
+            <button onclick="closeModal('modal-tambah-wilayah')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="handleSimpanWilayah(event)" class="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
+            <!-- Info Pokok Wilayah -->
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kode Wilayah (3-5 Huruf) *</label>
+                    <input type="text" id="wil-kode" required maxlength="5" placeholder="Contoh: LBR"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono uppercase font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Wilayah / Cabang *</label>
+                    <input type="text" id="wil-nama-cabang" required placeholder="Contoh: Cabang Lombok Barat"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kabupaten / Kota *</label>
+                    <input type="text" id="wil-nama" required placeholder="Lombok Barat"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Provinsi</label>
+                    <input type="text" id="wil-provinsi" value="Nusa Tenggara Barat"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan Cakupan Area</label>
+                <textarea id="wil-keterangan" rows="2" placeholder="Batu Layar, Gerung, Gunungsari, Kediri, Narmada, Sekotong..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
+            </div>
+
+            <!-- Bagian 1: Lokasi Kantor Cabang untuk Absensi -->
+            <div class="p-3.5 bg-sky-50/60 rounded-2xl border border-sky-100 space-y-3">
+                <div class="flex items-center gap-2 text-sky-800">
+                    <i class="fa-solid fa-building text-xs"></i>
+                    <h4 class="text-xs font-extrabold">1. Lokasi Kantor Cabang (Titik Absensi Sales)</h4>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Link Google Maps Kantor Cabang</label>
+                    <input type="url" id="wil-link-maps" oninput="handleWilayahMapsLinkInput(this.value)"
+                        placeholder="https://maps.google.com/?q=-8.681234,116.123456"
+                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="font-bold text-slate-700">Peta & Titik Koordinat Kantor</span>
+                        <span class="text-slate-400">Geser pin / klik peta untuk set titik</span>
+                    </div>
+                    <div class="relative w-full h-44 rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
+                        <div id="wilayah-map-container" class="w-full h-full z-10"></div>
+                        <button type="button" onclick="lockGPSForWilayahMap()" title="Kunci GPS Sekarang"
+                            class="absolute top-2.5 right-2.5 z-20 w-8 h-8 bg-white hover:bg-sky-50 text-sky-600 border border-slate-200 shadow-md rounded-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
+                            <i class="fa-solid fa-location-crosshairs text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Latitude</label>
+                        <input type="number" step="any" id="wil-lat" placeholder="-8.681234"
+                            class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Longitude</label>
+                        <input type="number" step="any" id="wil-lng" placeholder="116.123456"
+                            class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Radius (m)</label>
+                        <input type="number" id="wil-radius" value="100" min="10"
+                            class="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian 2: Setup Pembayaran Pelanggan Cabang -->
+            <div class="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-3">
+                <div class="flex items-center gap-2 text-indigo-900">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                    <h4 class="text-xs font-extrabold">2. Setup Pembayaran Cabang (POS & Struk)</h4>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Bank Transfer</label>
+                        <input type="text" id="wil-bank-name" placeholder="Bank BCA / Mandiri"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Nomor Rekening</label>
+                        <input type="text" id="wil-rekening" placeholder="2690877345"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Atas Nama Rekening</label>
+                    <input type="text" id="wil-atas-nama" placeholder="Novan Ardiansyah / Nama PT"
+                        class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">URL Barcode QRIS Cabang</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="wil-qris-url" placeholder="https://lh3.googleusercontent.com/d/..."
+                            class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-[11px]">
+                        <input type="file" id="wil-qris-file-input" accept="image/*" class="hidden" onchange="handleWilQrisFileSelected(event)">
+                        <button type="button" onclick="document.getElementById('wil-qris-file-input').click()"
+                            id="btn-upload-wil-qris"
+                            class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-indigo-200 transition-all cursor-pointer">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Upload</span>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">Upload foto QRIS cabang langsung ke Google Drive CDN.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100">
+                <button type="submit"
+                    class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30">
+                    Simpan Master Wilayah
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Tambah / Edit User -->
+<div id="modal-tambah-user"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h3 class="text-base font-extrabold text-slate-900" id="modal-user-title">Tambah / Edit Pengguna</h3>
+            <button onclick="closeModal('modal-tambah-user')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="handleSimpanUser(event)" class="py-4 space-y-3">
+            <input type="hidden" id="form-user-id" value="">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Username *</label>
+                <input type="text" id="usr-username" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                <input type="password" id="usr-password" placeholder="Kosongkan jika tidak diubah"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap *</label>
+                <input type="text" id="usr-nama" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Role *</label>
+                    <select id="usr-role"
+                        class="custom-select w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                        <option value="Sales">Sales</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Owner">Owner</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Wilayah Penugasan</label>
+                    <select id="usr-wilayah"
+                        class="custom-select w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"></select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp</label>
+                <input type="tel" id="usr-nohp" placeholder="08xxxxxxxxxx"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <button type="submit"
+                class="w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30">
+                Simpan Pengguna
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Permintaan Stok Bawaan Sales Pagi -->
+<div id="modal-request-stok"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 max-h-[90vh] flex flex-col space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked text-emerald-600"></i>
+                    <span>Permintaan Stok Bawaan Pagi</span>
+                </h3>
+                <p class="text-xs text-slate-500">Pilih produk dan jumlah pcs yang akan dibawa sales keliling hari ini.</p>
+            </div>
+            <button onclick="closeModal('modal-request-stok')" class="text-slate-400 p-1"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form onsubmit="handleSimpanRequestStok(event)" class="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
+            <div id="req-stok-sales-select-container" class="hidden">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Sales Penerima Stok *</label>
+                <select id="req-stok-sales-id"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Bawa *</label>
+                <input type="date" id="req-stok-tanggal" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-700">Daftar Produk yang Diminta *</label>
+                    <button type="button" onclick="addRequestStokRow()"
+                        class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Tambah Baris</span>
+                    </button>
+                </div>
+                <div id="request-stok-items-container" class="space-y-2"></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Tambahan</label>
+                <textarea id="req-stok-catatan" rows="2" placeholder="Kebutuhan rute toko area tertentu..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"></textarea>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100">
+                <button type="submit"
+                    class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/30">
+                    Kirim Permintaan Stok ke Admin
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Lightbox & Galeri Foto Kunjungan (Tampil 3 Foto Lengkap) -->
+<div id="modal-lightbox"
+    class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden"
+    onclick="closeModal('modal-lightbox')">
+    <div class="max-w-4xl w-full bg-slate-900 border border-white/10 rounded-3xl overflow-hidden p-5 shadow-2xl space-y-4 max-h-[92vh] flex flex-col"
+        onclick="event.stopPropagation()">
+        
+        <!-- Header Lightbox -->
+        <div class="flex justify-between items-start pb-3 border-b border-slate-800">
+            <div>
+                <h4 id="lightbox-title" class="text-sm font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-camera-retro text-indigo-400"></i>
+                    <span>Foto Bukti Kunjungan</span>
+                </h4>
+                <p id="lightbox-subtitle" class="text-xs text-slate-400 mt-0.5">Rincian bukti kunjungan outlet lapangan</p>
+            </div>
+            <button onclick="closeModal('modal-lightbox')" class="text-slate-400 hover:text-white p-1 cursor-pointer">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Tab Navigasi Foto (Tampil Otomatis untuk Galeri 3 Foto Kunjungan) -->
+        <div id="lightbox-tabs" class="flex flex-wrap items-center gap-2 pb-1 border-b border-slate-800/80">
+            <button type="button" id="btn-lb-all" onclick="switchLightboxTab('ALL')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Lihat Ke-3 Foto Sekaligus</span>
+            </button>
+            <button type="button" id="btn-lb-selfie" onclick="switchLightboxTab('SELFIE')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-user-check text-emerald-400"></i>
+                <span>1. Selfie Sales</span>
+            </button>
+            <button type="button" id="btn-lb-barang" onclick="switchLightboxTab('BARANG')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-boxes-packing text-amber-400"></i>
+                <span>2. Ambil/Serah Barang</span>
+            </button>
+            <button type="button" id="btn-lb-display" onclick="switchLightboxTab('DISPLAY')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-store text-sky-400"></i>
+                <span>3. Display/Etalase</span>
+            </button>
+        </div>
+
+        <!-- TAMPILAN 1: GRID 3 FOTO SEKALIGUS (Rekomendasi Client) -->
+        <div id="lightbox-grid-view" class="grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto custom-scrollbar flex-1 py-1">
+            <!-- 1. Selfie -->
+            <div class="bg-slate-800/70 border border-slate-700/60 rounded-2xl p-3 flex flex-col justify-between space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-check text-emerald-400"></i>
+                        <span>1. Selfie Sales</span>
+                    </span>
+                    <a id="link-full-selfie" href="#" target="_blank" class="text-[10px] text-indigo-400 hover:underline font-semibold">Buka Penuh</a>
+                </div>
+                <div class="w-full h-48 sm:h-56 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer group"
+                    onclick="switchLightboxTab('SELFIE')">
+                    <img id="lightbox-grid-selfie" src="" class="h-full w-full object-contain transition-transform group-hover:scale-105" alt="Selfie">
+                </div>
+            </div>
+
+            <!-- 2. Barang -->
+            <div class="bg-slate-800/70 border border-slate-700/60 rounded-2xl p-3 flex flex-col justify-between space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-boxes-packing text-amber-400"></i>
+                        <span>2. Serah Barang</span>
+                    </span>
+                    <a id="link-full-barang" href="#" target="_blank" class="text-[10px] text-indigo-400 hover:underline font-semibold">Buka Penuh</a>
+                </div>
+                <div class="w-full h-48 sm:h-56 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer group"
+                    onclick="switchLightboxTab('BARANG')">
+                    <img id="lightbox-grid-barang" src="" class="h-full w-full object-contain transition-transform group-hover:scale-105" alt="Barang">
+                </div>
+            </div>
+
+            <!-- 3. Display -->
+            <div class="bg-slate-800/70 border border-slate-700/60 rounded-2xl p-3 flex flex-col justify-between space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-store text-sky-400"></i>
+                        <span>3. Display/Toko</span>
+                    </span>
+                    <a id="link-full-display" href="#" target="_blank" class="text-[10px] text-indigo-400 hover:underline font-semibold">Buka Penuh</a>
+                </div>
+                <div class="w-full h-48 sm:h-56 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer group"
+                    onclick="switchLightboxTab('DISPLAY')">
+                    <img id="lightbox-grid-display" src="" class="h-full w-full object-contain transition-transform group-hover:scale-105" alt="Display">
+                </div>
+            </div>
+        </div>
+
+        <!-- TAMPILAN 2: SINGLE FOTO BESAR (Saat Klik Tab Spesifik / Foto Tunggal) -->
+        <div id="lightbox-single-view" class="hidden flex-col items-center justify-center flex-1 min-h-[300px] overflow-hidden space-y-2">
+            <div class="relative max-h-[65vh] w-full flex items-center justify-center overflow-hidden rounded-2xl bg-slate-950 p-2">
+                <img id="lightbox-img" src="" class="max-h-[62vh] max-w-full object-contain rounded-xl" alt="Lightbox">
+            </div>
+            <div class="flex items-center justify-between w-full px-2 pt-1 text-xs">
+                <span id="lightbox-single-caption" class="text-slate-300 font-semibold">Foto Kunjungan</span>
+                <a id="lightbox-single-link" href="#" target="_blank" class="text-indigo-400 hover:underline font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-up-right-from-square text-[10px]"></i>
+                    <span>Buka Ukuran Asli</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DETAIL RINCIAN KPI DASHBOARD (OMZET, TRANSAKSI, OUTLET, SALES) -->
+<!-- ========================================================================= -->
+<div id="modal-dashboard-detail"
+    class="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl p-6 max-h-[90vh] flex flex-col space-y-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 id="modal-dash-detail-title" class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                    <span>Rincian Data Dashboard</span>
+                </h3>
+                <p id="modal-dash-detail-subtitle" class="text-xs text-slate-500 mt-0.5">Daftar rekapan data detail real-time berdasarkan filter yang aktif.</p>
+            </div>
+            <button onclick="closeModal('modal-dashboard-detail')"
+                class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Controls: Search & Filter Tabs -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="modal-dash-detail-search" oninput="filterDashboardDetailList()"
+                    placeholder="Cari dalam daftar..."
+                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:border-indigo-500 focus:bg-white transition-all">
+            </div>
+            <div id="modal-dash-detail-chips" class="flex items-center gap-1.5">
+            </div>
+        </div>
+
+        <!-- Scrollable Table -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-100 rounded-2xl">
+            <table class="w-full text-left text-xs">
+                <thead id="modal-dash-detail-thead"
+                    class="bg-slate-50 text-slate-600 font-bold sticky top-0 border-b border-slate-200">
+                </thead>
+                <tbody id="modal-dash-detail-tbody" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <span id="modal-dash-detail-count" class="text-xs font-bold text-slate-500">Menampilkan 0 data</span>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="closeModal('modal-dashboard-detail')"
+                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors">
+                    Tutup
+                </button>
+                <button type="button" id="modal-dash-detail-action-btn"
+                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5">
+                    <span>Buka Halaman Lengkap</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Bulk Approval Stok Sales dengan Checklist & Review -->
+<div id="modal-bulk-approve-stok" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 max-h-[90vh] flex flex-col space-y-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-check-double text-indigo-600"></i>
+                    <span id="modal-bulk-stok-title">Persetujuan Daftar Stok Sales</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5" id="modal-bulk-stok-subtitle">Periksa dan centang produk yang disetujui untuk dibawa kanvas.</p>
+            </div>
+            <button onclick="closeModal('modal-bulk-approve-stok')" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Filter & Select All Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+            <label class="flex items-center gap-2.5 text-xs font-bold text-slate-800 cursor-pointer select-none">
+                <input type="checkbox" id="modal-bulk-check-all" onchange="toggleModalBulkCheckAll(this.checked)" checked
+                    class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer">
+                <span>Pilih / Centang Semua</span>
+            </label>
+            <div class="flex items-center gap-2">
+                <span id="modal-bulk-stok-count-badge" class="text-xs font-extrabold text-indigo-700 bg-white border border-indigo-200 px-3 py-1 rounded-xl shadow-2xs">
+                    0 item dipilih
+                </span>
+            </div>
+        </div>
+
+        <!-- Scrollable Items List -->
+        <div class="flex-1 overflow-y-auto py-1 space-y-2.5 custom-scrollbar min-h-[180px] max-h-[48vh]" id="modal-bulk-stok-items-container">
+            <!-- Dynamic Items -->
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
+            <button type="button" onclick="closeModal('modal-bulk-approve-stok')"
+                class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors">
+                Batal
+            </button>
+            <button type="button" onclick="submitModalBulkApproval()" id="btn-submit-modal-bulk-approve"
+                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30 flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-check-double"></i>
+                <span id="btn-submit-modal-bulk-text">Setujui Item Terpilih</span>
+            </button>
+        </div>
+    </div>
+</div>

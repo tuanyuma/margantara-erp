@@ -1,0 +1,19 @@
+{
+  "name": "margantara-erp",
+  "version": "1.0.0",
+  "description": "Margantara ERP - Monitoring Sales, POS & Absensi Toko",
+  "scripts": {
+    "build": "node build.js",
+    "start": "npx -y serve dist"
+  },
+  "keywords": [
+    "erp",
+    "sales",
+    "pos",
+    "absensi",
+    "supabase",
+    "gas",
+    "vercel"
+  ],
+  "license": "ISC"
+}

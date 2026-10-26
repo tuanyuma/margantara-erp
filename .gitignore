@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Secret & Clasp Configurations (Jangan commit Script ID / Token ke GitHub publik)
+.clasp.json
+.clasprc.json
+
+# Local Environment & Secrets
+.env
+.env.local
+
+# Operating System Files
+Thumbs.db
+.DS_Store
+*.log

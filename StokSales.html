@@ -1,0 +1,144 @@
+<!-- =============================================================== -->
+<!-- TAB: STOK BAWAAN SALES HARIAN (REQUEST & RETUR CLOSING) -->
+<!-- =============================================================== -->
+<section id="tab-stok-sales" class="tab-content hidden space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-base font-extrabold text-slate-900">Manajemen Stok Bawaan Sales Harian</h2>
+            <p class="text-xs text-slate-500">Pencatatan barang bawaan kanvas sales: Permintaan pagi, penjualan POS
+                harian, dan retur sisa sore.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openModalBulkApproveStok()" id="btn-bulk-approve-stok"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-2">
+                <i class="fa-solid fa-check-double"></i>
+                <span>Setujui Semua Stok Sales</span>
+            </button>
+            <button onclick="openModalRequestStok()"
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i>
+                <span>Ajukan Stok Pagi</span>
+            </button>
+            <button onclick="submitClosingReturSalesPrompt()"
+                class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-amber-600/30 flex items-center gap-2">
+                <i class="fa-solid fa-box-archive"></i>
+                <span>Tutup Hari & Retur Sisa</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4 Ringkasan KPI Stok Hari Ini -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-500">Total Stok Diminta</span>
+            <h3 id="kpi-stok-diminta" class="text-xl font-extrabold text-slate-900 mt-1">0 Pcs</h3>
+        </div>
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-500">Stok Disetujui (Dibawa)</span>
+            <h3 id="kpi-stok-disetujui" class="text-xl font-extrabold text-emerald-600 mt-1">0 Pcs</h3>
+        </div>
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-500">Terjual di POS</span>
+            <h3 id="kpi-stok-terjual" class="text-xl font-extrabold text-indigo-600 mt-1">0 Pcs</h3>
+        </div>
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-500">Sisa di Tangan Sales</span>
+            <h3 id="kpi-stok-sisa" class="text-xl font-extrabold text-amber-600 mt-1">0 Pcs</h3>
+        </div>
+    </div>
+
+    <!-- Filter Tanggal, Sales & Search -->
+    <div
+        class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto flex-1">
+            <div class="w-full sm:w-64 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" onkeyup="setTableSearch('stokSales', this.value)"
+                    placeholder="Cari produk / nama sales..."
+                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <input type="date" id="filter-stok-sales-tanggal" onchange="loadStokSalesHarian()"
+                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+            <select id="filter-stok-sales-id" onchange="loadStokSalesHarian()"
+                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                <option value="">Semua Sales</option>
+            </select>
+        </div>
+        <button onclick="loadStokSalesHarian()"
+            class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 w-full sm:w-auto justify-center">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Refresh Data</span>
+        </button>
+    </div>
+
+    <!-- Bulk Selection Action Bar -->
+    <div id="bulk-stok-action-bar"
+        class="hidden bg-indigo-50 border border-indigo-200 p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+            <span id="bulk-stok-selected-count" class="text-xs font-extrabold text-indigo-950">0 item dipilih</span>
+            <span class="text-[11px] text-indigo-600 font-medium">(Bisa ACC sebagian atau semua sekaligus)</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openModalBulkApproveStok(null, AppState.selectedStokIds)"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-check-double"></i>
+                <span id="btn-text-approve-selected">Setujui Item Terpilih</span>
+            </button>
+            <button onclick="clearStokSelection()"
+                class="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold border border-slate-200 transition-all">
+                Batal
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabel Stok Bawaan Sales -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="p-4 w-10 text-center">
+                            <input type="checkbox" id="check-all-stok-sales"
+                                onchange="toggleSelectAllStokSales(this.checked)"
+                                title="Centang / Hapus Semua Item Pending"
+                                class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer">
+                        </th>
+                        <th class="p-4">Tanggal & Waktu</th>
+                        <th class="p-4">Nama Sales</th>
+                        <th class="p-4">Produk</th>
+                        <th class="p-4 text-center">Diminta</th>
+                        <th class="p-4 text-center">Disetujui</th>
+                        <th class="p-4 text-center">Terjual POS</th>
+                        <th class="p-4 text-center">Retur Sore</th>
+                        <th class="p-4 text-center">Sisa di Tangan</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="table-stok-sales-body" class="divide-y divide-slate-100 text-slate-700">
+                    <tr>
+                        <td colspan="11" class="text-center p-6 text-slate-400">Memuat data stok sales...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls Stok Sales -->
+        <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <span id="pagination-info-stokSales" class="text-slate-500 font-medium">Menampilkan 0 data</span>
+            <div class="flex items-center gap-2">
+                <button id="btn-prev-stokSales" onclick="changeTablePage('stokSales', -1)"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700 transition-colors">
+                    <i class="fa-solid fa-chevron-left mr-1"></i> Sebelumnya
+                </button>
+                <button id="btn-next-stokSales" onclick="changeTablePage('stokSales', 1)"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700 transition-colors">
+                    Selanjutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>

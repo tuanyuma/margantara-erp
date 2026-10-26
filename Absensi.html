@@ -1,0 +1,69 @@
+<!-- =============================================================== -->
+<!-- TAB: FORM ABSENSI SALES (Check-in Harian) -->
+<!-- =============================================================== -->
+<section id="tab-absensi" class="tab-content hidden space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-base font-extrabold text-slate-900">Form Absensi Sales</h2>
+            <p class="text-xs text-slate-500">Ambil foto selfie dan catat waktu kehadiran harian
+                dengan validasi GPS.</p>
+        </div>
+    </div>
+
+    <div
+        class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs max-w-lg mx-auto space-y-4">
+        <div class="text-center pb-3 border-b border-slate-100 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900">Form Kehadiran Harian</h3>
+            <p class="text-xs text-emerald-600 font-semibold" id="absensi-status-subtext">GPS
+                Terkunci (Dalam Radius Kantor)</p>
+            <p class="text-[11px] text-slate-400 font-mono" id="absensi-office-info">Titik Acuan:
+                Kantor Utama</p>
+            <button type="button"
+                onclick="lockGPSForAbsensi();"
+                class="mt-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-indigo-600 rounded-xl text-[11px] font-bold inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Refresh Sinyal GPS Saya</span>
+            </button>
+        </div>
+
+        <!-- Kotak Kamera Selfie (Placeholder Kamera Netral) -->
+        <div
+            class="w-full h-56 bg-slate-900 rounded-2xl overflow-hidden relative flex flex-col items-center justify-center text-slate-400 border border-slate-800 shadow-inner">
+            
+            <!-- Placeholder Kamera Awal -->
+            <div id="absensi-camera-placeholder" class="flex flex-col items-center justify-center space-y-2.5 p-4 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-400 shadow-inner">
+                    <i class="fa-solid fa-camera text-2xl text-slate-400"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-300">Belum Ada Foto Selfie</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Tekan tombol di bawah untuk mengambil foto</p>
+                </div>
+            </div>
+
+            <!-- Preview Foto Selfie Hasil Kamera (Tampil Hanya Setelah Ambil Foto) -->
+            <img id="absensi-photo-preview" src="" class="w-full h-full object-cover hidden" alt="Selfie">
+
+            <label
+                class="absolute bottom-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-md flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-camera"></i>
+                <span id="absensi-camera-btn-text">Ambil Selfie</span>
+                <input type="file" accept="image/*" capture="user" class="hidden"
+                    onchange="handleAbsensiPhoto(event)">
+            </label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="submitAbsensi('MASUK')"
+                class="py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span>Absen Masuk</span>
+            </button>
+            <button onclick="submitAbsensi('PULANG')"
+                class="py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-rose-600/30 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Absen Pulang</span>
+            </button>
+        </div>
+    </div>
+</section>

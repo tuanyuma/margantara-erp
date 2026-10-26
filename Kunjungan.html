@@ -1,0 +1,66 @@
+<!-- =============================================================== -->
+<!-- TAB: KUNJUNGAN TOKO -->
+<!-- =============================================================== -->
+<section id="tab-kunjungan" class="tab-content hidden space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-base font-extrabold text-slate-900">Daftar Kunjungan Outlet</h2>
+            <p class="text-xs text-slate-500">Pilih toko yang dikunjungi untuk validasi radius dan
+                pengambilan 3 foto bukti ke Google Drive.</p>
+        </div>
+        <button onclick="openRouteMapModal()"
+            class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 border border-indigo-200 shadow-2xs transition-all w-fit">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>Lihat Peta Rute</span>
+        </button>
+    </div>
+
+    <!-- Controls: Search, Filter Wilayah, Refresh -->
+    <div
+        class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto flex-1">
+            <div class="w-full sm:w-72 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" onkeyup="setTableSearch('kunjungan', this.value)"
+                    placeholder="Cari nama toko / alamat..."
+                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+
+            <!-- Filter Area / Wilayah -->
+            <select id="filter-kunjungan-wilayah" onchange="setTableWilayahFilter('kunjungan', this.value)"
+                class="w-full sm:w-auto px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                <option value="SEMUA">Semua Wilayah</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button onclick="loadInitialData()"
+                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="outlet-kunjungan-cards">
+    </div>
+
+    <!-- Pagination Controls Kunjungan -->
+    <div
+        class="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <span id="pagination-info-kunjungan" class="text-slate-500 font-medium">Menampilkan 0 outlet</span>
+        <div class="flex items-center gap-2">
+            <button id="btn-prev-kunjungan" onclick="changeTablePage('kunjungan', -1)"
+                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700 transition-colors">
+                <i class="fa-solid fa-chevron-left mr-1"></i> Sebelumnya
+            </button>
+            <button id="btn-next-kunjungan" onclick="changeTablePage('kunjungan', 1)"
+                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700 transition-colors">
+                Selanjutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+</section>

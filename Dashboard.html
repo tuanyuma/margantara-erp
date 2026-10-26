@@ -1,0 +1,228 @@
+<!-- =============================================================== -->
+<!-- TAB: DASHBOARD (100% Integrated Live Database) -->
+<!-- =============================================================== -->
+<section id="tab-dashboard" class="tab-content space-y-6">
+    <div
+        class="bg-gradient-to-r from-[#0B132B] via-slate-900 to-indigo-950 rounded-3xl p-5 sm:p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div class="space-y-1">
+            <p class="text-xs text-indigo-300 font-bold uppercase tracking-wider">Selamat Datang di Dashboard</p>
+            <h2 id="sales-greeting-name" class="text-xl sm:text-2xl font-extrabold text-white">Hai!</h2>
+            <p class="text-xs text-slate-300">Data Terintegrasi Real-Time dari Google Sheets</p>
+        </div>
+
+        <div class="w-full md:w-auto flex flex-col gap-3">
+            <!-- Filter Row: 1 kolom di HP kecil, 3 kolom di desktop / tablet -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+                <!-- Filter Wilayah Dropdown -->
+                <div id="dashboard-wilayah-container"
+                    class="w-full bg-white/10 hover:bg-white/15 transition-all backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-indigo-300 text-xs shrink-0"></i>
+                    <select id="dashboard-wilayah-filter" onchange="changeDashboardWilayah(this.value)"
+                        class="w-full bg-transparent text-white font-bold text-xs outline-none cursor-pointer custom-dark-select truncate">
+                        <option value="SEMUA" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Semua Wilayah</option>
+                    </select>
+                </div>
+
+                <!-- Filter Sales Dropdown -->
+                <div id="dashboard-sales-container"
+                    class="w-full bg-white/10 hover:bg-white/15 transition-all backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 flex items-center gap-2">
+                    <i class="fa-solid fa-user-tie text-indigo-300 text-xs shrink-0"></i>
+                    <select id="dashboard-sales-filter" onchange="changeDashboardSales(this.value)"
+                        class="w-full bg-transparent text-white font-bold text-xs outline-none cursor-pointer custom-dark-select truncate">
+                        <option value="SEMUA" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Semua Sales</option>
+                    </select>
+                </div>
+
+                <!-- Filter Periode Waktu -->
+                <div id="dashboard-periode-container"
+                    class="w-full bg-white/10 hover:bg-white/15 transition-all backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-indigo-300 text-xs shrink-0"></i>
+                    <select id="dashboard-period-filter" onchange="changeDashboardPeriod(this.value)"
+                        class="w-full bg-transparent text-white font-bold text-xs outline-none cursor-pointer custom-dark-select truncate">
+                        <option value="TODAY" selected style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Hari Ini</option>
+                        <option value="THIS_MONTH" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Bulan Ini</option>
+                        <option value="LAST_7" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">7 Hari Terakhir</option>
+                        <option value="ALL" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Semua Waktu</option>
+                        <option value="CUSTOM" style="color:#0f172a; background-color:#ffffff;" class="text-slate-900 bg-white font-bold">Pilih Tanggal...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons: 2 Kolom Seimbang (Kiri-Kanan Pas & Tengah) -->
+            <div class="grid grid-cols-2 gap-2.5 w-full">
+                <button onclick="switchTab('kunjungan')"
+                    class="w-full py-2.5 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-xs font-bold shadow-md shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Mulai Kunjungan</span>
+                </button>
+                <button onclick="switchTab('pos')"
+                    class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span>Buka POS</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Period & Context Indicator Bar -->
+    <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+            <span id="dashboard-period-active-badge" class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-xl shadow-2xs shrink-0">
+                <i class="fa-solid fa-calendar-day text-indigo-600"></i>
+                <span id="dashboard-active-period-text">Data: Hari Ini</span>
+            </span>
+            <span class="text-[11px] text-slate-400 hidden sm:inline truncate">&bull; Data otomatis di-reset setiap hari</span>
+        </div>
+        <button type="button" onclick="toggleDashboardPeriodQuick()" id="btn-toggle-dashboard-period"
+            class="text-[11px] sm:text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:underline cursor-pointer shrink-0">
+            <span id="btn-toggle-period-label">Lihat Rekap Bulan Ini &rarr;</span>
+        </button>
+    </div>
+
+    <!-- 4 Clickable KPI Cards (Grid Simetris & Pas di Layar HP) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+        <!-- Card 1: Total Omzet -->
+        <div onclick="openDashboardDetailModal('omzet')" title="Klik untuk melihat rincian omzet"
+            class="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] sm:text-xs font-bold text-slate-500">Total Omzet</span>
+                <span class="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs group-hover:scale-110 transition-transform"><i class="fa-solid fa-arrow-trend-up"></i></span>
+            </div>
+            <div class="my-2 sm:my-3">
+                <h3 id="kpi-total-omzet" class="text-base sm:text-2xl font-extrabold text-slate-900 truncate">Rp 0</h3>
+            </div>
+            <span class="text-[10px] text-indigo-600 font-bold group-hover:underline flex items-center gap-1">
+                <span>Rincian Transaksi</span>
+                <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </span>
+        </div>
+
+        <!-- Card 2: Total Transaksi -->
+        <div onclick="openDashboardDetailModal('transaksi')" title="Klik untuk melihat rincian faktur"
+            class="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] sm:text-xs font-bold text-slate-500">Total Transaksi</span>
+                <span class="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs group-hover:scale-110 transition-transform"><i class="fa-solid fa-arrow-trend-up"></i></span>
+            </div>
+            <div class="my-2 sm:my-3">
+                <h3 id="kpi-total-transaksi" class="text-base sm:text-2xl font-extrabold text-slate-900 truncate">0 Faktur</h3>
+            </div>
+            <span class="text-[10px] text-indigo-600 font-bold group-hover:underline flex items-center gap-1">
+                <span>Rincian Faktur</span>
+                <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </span>
+        </div>
+
+        <!-- Card 3: Outlet Aktif -->
+        <div onclick="openDashboardDetailModal('outlet')" title="Klik untuk melihat rincian toko/outlet"
+            class="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] sm:text-xs font-bold text-slate-500">Outlet Aktif</span>
+                <span class="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs group-hover:scale-110 transition-transform"><i class="fa-solid fa-arrow-trend-up"></i></span>
+            </div>
+            <div class="my-2 sm:my-3">
+                <h3 id="kpi-outlet-aktif" class="text-base sm:text-2xl font-extrabold text-slate-900 truncate">0 Toko</h3>
+            </div>
+            <span class="text-[10px] text-indigo-600 font-bold group-hover:underline flex items-center gap-1">
+                <span>Rincian Outlet</span>
+                <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </span>
+        </div>
+
+        <!-- Card 4: Sales Lapangan -->
+        <div onclick="openDashboardDetailModal('sales')" title="Klik untuk melihat rincian sales & presensi"
+            class="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] sm:text-xs font-bold text-slate-500">Sales Lapangan</span>
+                <span class="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs group-hover:scale-110 transition-transform"><i class="fa-solid fa-arrow-trend-up"></i></span>
+            </div>
+            <div class="my-2 sm:my-3">
+                <h3 id="kpi-sales-hadir" class="text-base sm:text-2xl font-extrabold text-slate-900 truncate">0/0 Hadir</h3>
+            </div>
+            <span class="text-[10px] text-indigo-600 font-bold group-hover:underline flex items-center gap-1">
+                <span>Rincian Kehadiran</span>
+                <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </span>
+        </div>
+    </div>
+
+    <!-- Charts & Leaderboard -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h3 id="dash-chart-title" class="text-xs sm:text-sm font-extrabold text-slate-900">Volume Penjualan Per Item Produk (Bks)</h3>
+                    <p id="dash-chart-subtitle" class="text-[11px] text-slate-500">Perbandingan kuantiti 12 varian produk rokok • Konversi otomatis ke Ball</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
+                        <button type="button" id="btn-chart-mode-bar" onclick="switchDashboardChartMode('bar')" class="px-2.5 py-1 bg-white text-indigo-600 shadow-2xs rounded-lg transition-all">
+                            <i class="fa-solid fa-chart-column mr-1"></i>Per Item
+                        </button>
+                        <button type="button" id="btn-chart-mode-line" onclick="switchDashboardChartMode('line')" class="px-2.5 py-1 text-slate-500 hover:text-slate-700 rounded-lg transition-all">
+                            <i class="fa-solid fa-chart-line mr-1"></i>Tren 7 Hari
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-indigo-600 font-bold bg-indigo-50 px-2.5 py-1 rounded-xl">
+                        <i class="fa-solid fa-boxes-stacked text-[11px]"></i>
+                        <span id="dash-chart-unit-badge">Satuan: Bks</span>
+                    </div>
+                </div>
+            </div>
+            <div class="h-64 relative">
+                <canvas id="salesTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-900">Leaderboard Sales Terbaik</h3>
+                        <p class="text-[10px] text-slate-400">Peringkat perolehan omzet sales</p>
+                    </div>
+                    <span id="badge-leaderboard-page" class="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-full">Top Sales</span>
+                </div>
+                <div id="leaderboard-list" class="space-y-2.5">
+                </div>
+            </div>
+
+            <!-- Leaderboard Pagination -->
+            <div id="leaderboard-pagination-container" class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
+                <button type="button" id="btn-prev-leaderboard" onclick="prevLeaderboardPage()" class="p-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                    <span>Prev</span>
+                </button>
+                <span id="pagination-info-leaderboard" class="text-[11px] font-bold text-slate-500">1 / 1</span>
+                <button type="button" id="btn-next-leaderboard" onclick="nextLeaderboardPage()" class="p-1.5 px-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1">
+                    <span>Next</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitoring Kunjungan Terkini -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-900">Monitoring Kunjungan Terkini</h3>
+            <button onclick="switchTab('kunjungan')"
+                class="text-xs text-indigo-600 font-bold hover:underline">Lihat Semua</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="p-4">Nama Outlet</th>
+                        <th class="p-4">Sales</th>
+                        <th class="p-4">Waktu</th>
+                        <th class="p-4">Status</th>
+                        <th class="p-4 text-center">Foto Bukti</th>
+                    </tr>
+                </thead>
+                <tbody id="table-recent-visits" class="divide-y divide-slate-100 text-slate-700">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

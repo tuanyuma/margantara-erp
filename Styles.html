@@ -1,0 +1,394 @@
+<style>
+    html, body {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: none !important;
+        overscroll-behavior-y: none !important;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box !important;
+    }
+
+    #view-login {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        box-sizing: border-box !important;
+    }
+
+    #view-login.hidden {
+        display: none !important;
+    }
+
+    /* Layout Shell Aplikasi Utama: Scroll lancar tanpa macet di semua layar HP & APK */
+    #view-app {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #app-main-layout {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        display: flex !important;
+        overflow: hidden !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #app-content-wrapper {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        width: 100% !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Header WAJIB diam di atas (shrink-0, tidak ikut ter-scroll saat konten di bawahnya di-scroll) */
+    header {
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+        position: relative !important;
+        top: 0 !important;
+        z-index: 40 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Main Area: Satu-satunya area konten yang di-scroll */
+    main {
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 10 !important;
+        overscroll-behavior-y: contain !important;
+    }
+
+    /* Kunci seluruh modal dan area scroll agar TIDAK memicu Pull-to-Refresh browser saat di-scroll */
+    main, .modal-scroll-container, .tab-content, [id^="modal-"], .overflow-y-auto {
+        overscroll-behavior: contain !important;
+        overscroll-behavior-y: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .login-card {
+        width: 100% !important;
+        max-width: 28rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Container utama tampilan agar presisi di tengah, simetris dan rapi di semua layar HP */
+    .mobile-content-container {
+        width: 100% !important;
+        max-width: 1200px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Pop-up Dropdown Notifikasi & Profil: Selalu PALING DEPAN (z-index: 99999), ukuran pas dan tidak terpotong */
+    #notification-dropdown-menu {
+        position: absolute !important;
+        right: 0 !important;
+        top: calc(100% + 8px) !important;
+        width: 360px !important;
+        max-width: calc(100vw - 24px) !important;
+        min-width: 280px !important;
+        box-sizing: border-box !important;
+        z-index: 99999 !important;
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+        background: #ffffff !important;
+        border-radius: 1.5rem !important;
+        overscroll-behavior: contain !important;
+    }
+
+    #notification-list-container {
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    @media (max-width: 640px) {
+        #notification-dropdown-menu {
+            position: fixed !important;
+            top: 60px !important;
+            right: 12px !important;
+            left: 12px !important;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            z-index: 99999 !important;
+            overscroll-behavior: contain !important;
+        }
+
+        #profile-dropdown-menu {
+            position: fixed !important;
+            top: 60px !important;
+            right: 12px !important;
+            width: 230px !important;
+            max-width: calc(100vw - 24px) !important;
+            z-index: 99999 !important;
+            overscroll-behavior: contain !important;
+        }
+    }
+
+    #profile-dropdown-menu {
+        position: absolute !important;
+        right: 0 !important;
+        top: calc(100% + 8px) !important;
+        width: 230px !important;
+        max-width: calc(100vw - 20px) !important;
+        box-sizing: border-box !important;
+        z-index: 99999 !important;
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+        background: #ffffff !important;
+        border-radius: 1.25rem !important;
+    }
+
+    /* Kunci tabel data agar hanya scroll horizontal di kotaknya sendiri tanpa membuat layar bergeser */
+    .overflow-x-auto,
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 9999px;
+    }
+
+    .pulse-dot {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: .4;
+            transform: scale(1.2);
+        }
+    }
+
+    /* Custom Styled Select */
+    .custom-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236366f1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.75rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25em 1.25em;
+        padding-right: 2.25rem;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    /* Fix for native select dropdown options inheriting light text colors */
+    select option,
+    #dashboard-wilayah-filter option,
+    .custom-dark-select option {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        font-weight: 600 !important;
+        padding: 6px 10px !important;
+    }
+
+    .receipt-paper {
+        background: #fdfdfd;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border-top: 5px dashed #e2e8f0;
+        border-bottom: 5px dashed #e2e8f0;
+    }
+
+    th.sortable-th {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    th.sortable-th:hover {
+        background-color: #e2e8f0;
+    }
+
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
+        /* MODE 1: KHUSUS CETAK STRUK THERMAL POS (58mm / 80mm Roll) */
+        body.printing-receipt {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+        }
+
+        body.printing-receipt * {
+            visibility: hidden !important;
+        }
+
+        body.printing-receipt #modal-receipt-view,
+        body.printing-receipt #modal-receipt-view .receipt-paper,
+        body.printing-receipt #modal-receipt-view .receipt-paper * {
+            visibility: visible !important;
+        }
+
+        body.printing-receipt #modal-receipt-view {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        body.printing-receipt .receipt-paper {
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 58mm !important;
+            margin: 0 auto !important;
+            padding: 4px 6px 30px 6px !important;
+            font-size: 11px !important;
+        }
+
+        body.printing-receipt .no-print,
+        body.printing-receipt button {
+            display: none !important;
+        }
+
+        /* MODE 2: CETAK LAPORAN & DOKUMEN RESMI (A4) */
+        body:not(.printing-receipt) {
+            background: white !important;
+            color: #0f172a !important;
+        }
+
+        /* Sembunyikan elemen UI yang tidak relevan di kertas laporan */
+        aside,
+        header,
+        nav,
+        #sidebar,
+        #top-mobile-nav,
+        #bottom-mobile-nav,
+        #toast-container,
+        #loading-overlay,
+        .no-print,
+        #tab-laporan .no-print,
+        button,
+        input,
+        select,
+        textarea,
+        .custom-select,
+        .fixed,
+        .modal-backdrop {
+            display: none !important;
+        }
+
+        /* Pastikan tab laporan terbuka penuh */
+        #tab-laporan {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Kop Surat Laporan Resmi */
+        #report-print-header {
+            display: block !important;
+            margin-bottom: 20px !important;
+            border-bottom: 2.5px solid #0f172a !important;
+            padding-bottom: 12px !important;
+        }
+
+        #report-table-container {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+        }
+
+        /* Format Tabel Laporan Rapi & Tajam */
+        #table-report-export {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 9.5pt !important;
+            color: #0f172a !important;
+        }
+
+        #table-report-export thead th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            font-weight: 800 !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 8px 10px !important;
+            text-align: left !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        #table-report-export tbody td {
+            border: 1px solid #e2e8f0 !important;
+            padding: 7px 10px !important;
+            font-size: 9pt !important;
+            color: #1e293b !important;
+            background: white !important;
+        }
+
+        #table-report-export tbody tr:nth-child(even) td {
+            background-color: #f8fafc !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        #table-report-export tr {
+            page-break-inside: avoid !important;
+        }
+    }
+</style>

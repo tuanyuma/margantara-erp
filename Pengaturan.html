@@ -1,0 +1,396 @@
+<!-- =============================================================== -->
+<!-- TAB: PENGATURAN (Owner Only) -->
+<!-- =============================================================== -->
+<section id="tab-pengaturan" class="tab-content hidden space-y-6">
+    <div>
+        <h2 class="text-base font-extrabold text-slate-900">Pengaturan WebApp & Akun Pengguna</h2>
+        <p class="text-xs text-slate-500">Kelola branding webapp dan manajemen akun pengguna (Owner & Admin).</p>
+    </div>
+
+    <!-- CARD DATABASE & CLOUD SYNC (SUPABASE HYBRID) - FULL WIDTH MEMANJANG -->
+    <div id="card-supabase-cloud-sync" class="w-full bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+        <!-- 1. Header & Cek Koneksi -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <div class="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                        <i class="fa-solid fa-database text-xs"></i>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Database & Cloud Sync (Supabase Hybrid)</h3>
+                    <span id="badge-supabase-status" class="text-[11px] bg-slate-100 text-slate-600 font-bold px-2.5 py-0.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> STANDBY / INACTIVE
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Arsitektur Dual-Database: Supabase PostgreSQL sebagai database realtime berkecepatan tinggi, dan Google Sheets sebagai backup otomatis.</p>
+            </div>
+            <button type="button" onclick="handleCheckConnection()" id="btn-check-supabase-connection"
+                class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer self-start sm:self-auto shrink-0">
+                <i class="fa-solid fa-arrows-rotate text-slate-500 text-xs"></i>
+                <span>Cek Koneksi</span>
+            </button>
+        </div>
+
+        <!-- 2. Inputs Row (2 Kolom: URL di Kiri, Key di Kanan) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <!-- Kolom Kiri: Supabase Project URL -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-800">
+                    Supabase Project URL <span class="text-rose-500">*</span>
+                </label>
+                <input type="url" id="cfg-supabase-url" required
+                    placeholder="https://xxxxxxxxxxxx.supabase.co"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-[11px] text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                <p class="text-[11px] text-slate-500">
+                    Dapatkan URL dari dashboard Supabase: <span class="text-rose-600 font-medium">Project Settings &gt; API &gt; Project URL</span>.
+                </p>
+            </div>
+
+            <!-- Kolom Kanan: Supabase Service Role Key -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-800">
+                        Supabase Service Role Key (Secret) <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                        <i class="fa-solid fa-shield text-[9px]"></i> Server-Side Only
+                    </span>
+                </div>
+                <div class="relative">
+                    <input type="password" id="cfg-supabase-key"
+                        placeholder="•••••••••••••••••••••••••••••••• (Tersimpan Aman di Properti Skrip)"
+                        class="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-[11px] text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <button type="button" onclick="toggleSupabaseKeyVisibility()"
+                        class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">
+                        <i id="icon-toggle-supabase-key" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500">
+                    Dapatkan dari <span class="text-rose-600 font-medium">Project Settings &gt; API &gt; Project API keys &gt; service_role (secret)</span>.
+                </p>
+                <div class="p-2.5 bg-emerald-50/70 rounded-xl border border-emerald-200/80 flex items-start gap-2 text-[11px] text-emerald-900 mt-2">
+                    <i class="fa-solid fa-shield-halved text-emerald-600 mt-0.5 shrink-0"></i>
+                    <div>
+                        <strong class="font-bold">Privasi Terproteksi:</strong> Kunci rahasia telah ditransfer dan tersimpan aman di Properti Skrip Google Apps Script. Kunci tidak terekspos ke publik atau browser client.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Kontrol Mode & Switch Cloud Sync -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center pt-3 border-t border-slate-100">
+            <div>
+                <label class="block text-xs font-bold text-slate-800 mb-1.5">Mode Database Aktif</label>
+                <select id="cfg-supabase-mode" onchange="handleModeChange(this.value)"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer">
+                    <option value="hybrid">🚀 Mode Hybrid (Supabase Realtime + Sheets Backup)</option>
+                    <option value="sheets">📄 Mode Standalone Google Sheets (Backup Only)</option>
+                </select>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50/70 rounded-xl border border-slate-200/70">
+                <div>
+                    <div class="font-bold text-xs text-slate-800">Aktifkan Cloud Sync Supabase</div>
+                    <div class="text-[10px] text-slate-500">Dual-write otomatis setiap ada CRUD</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="cfg-supabase-sync-toggle" onchange="handleToggleCloudSync(this.checked)" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- 4. Transfer Kredensial Bar -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-start sm:items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-slate-200/80 flex items-center justify-center text-slate-700 shrink-0">
+                    <i class="fa-solid fa-shield text-xs"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-900">Transfer Kredensial ke Properti Skrip (Server-Side)</div>
+                    <div class="text-[11px] text-slate-500">Memindahkan URL & Service Role Key langsung ke Script Properties Google Apps Script agar privasi terjaga 100% dan tidak ter-hardcode.</div>
+                </div>
+            </div>
+            <button type="button" onclick="handleSaveSupabaseConfig()" id="btn-save-supabase"
+                class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs shrink-0">
+                <i class="fa-solid fa-shield-halved text-xs"></i>
+                <span id="btn-save-supabase-text">Transfer & Amankan Kunci</span>
+            </button>
+        </div>
+
+        <!-- 5. Langkah 1: Siapkan Tabel di Supabase (DDL SQL 1-Klik) -->
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-900">Langkah 1: Siapkan Tabel di Supabase (DDL SQL 1-Klik)</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">
+                        Klik tombol di samping untuk menyalin query <code class="text-indigo-600 font-bold bg-indigo-50 px-1 py-0.5 rounded">CREATE TABLE</code> lengkap untuk seluruh tabel sistem. Buka <strong class="text-slate-700">SQL Editor</strong> di dashboard Supabase Anda, paste query, dan klik <strong class="text-slate-700">Run</strong>.
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" onclick="handleCopySQLDDL()" id="btn-copy-sql-ddl"
+                    class="px-3.5 py-2 bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-regular fa-clipboard text-xs"></i>
+                    <span>Salin Skema SQL DDL</span>
+                </button>
+                <a href="https://supabase.com/dashboard" target="_blank"
+                    class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    <span>Buka Supabase</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 6. Langkah 2: Migrasi & Import Seluruh Data ke Supabase (Highlight Box Biru) -->
+        <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <i class="fa-solid fa-rocket text-xs"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-blue-950">Langkah 2: Migrasi & Import Seluruh Data ke Supabase</span>
+                        <span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-md border border-emerald-300">Otomatis 100%</span>
+                    </div>
+                    <div class="text-[11px] text-blue-900/80 mt-0.5">
+                        Menyalin seluruh data master, produk, outlet, kunjungan, absensi, dan riwayat transaksi dari Google Sheets langsung ke Supabase dalam hitungan detik tanpa membuka database.
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="handleSyncSheetsToSupabase()" id="btn-sync-supabase"
+                class="px-4 py-2.5 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs shrink-0">
+                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                <span>Mulai Migrasi Sekarang</span>
+            </button>
+        </div>
+
+        <!-- 7. Anti-Pause 6 Hari (Footer) -->
+        <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2 text-[11px] text-slate-600">
+                <i class="fa-solid fa-shield text-emerald-600"></i>
+                <span><strong class="font-bold text-slate-700">Anti-Pause 6 Hari:</strong> Menjaga database Supabase Free Tier tetap hidup dan mencegah auto-pause jika toko/sales libur/tidak ada aktivitas.</span>
+            </div>
+            <button type="button" onclick="handleSetupAntiPause()" id="btn-anti-pause"
+                class="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs shrink-0 self-start sm:self-auto">
+                <i class="fa-regular fa-clock text-slate-500 text-xs"></i>
+                <span>Pasang Trigger Anti-Pause</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="space-y-6" id="card-branding-pengaturan">
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-palette text-indigo-600"></i>
+                        <span>Branding & Logo WebApp</span>
+                    </h3>
+                    <span
+                        class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full border border-indigo-200">Google
+                        Drive CDN</span>
+                </div>
+
+                <!-- Preview Logo Full (Aman untuk Logo Panjang/Banner) -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1.5">Tampilan Logo Aktif</label>
+                    <div
+                        class="w-full bg-slate-50 border-2 border-dashed border-slate-200 hover:border-indigo-300 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[110px] transition-all relative group overflow-hidden">
+                        <img id="cfg-logo-preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                            class="max-h-20 sm:max-h-24 max-w-full w-auto object-contain mx-auto transition-transform group-hover:scale-105"
+                            alt="Preview Logo">
+                        <span class="text-[10px] text-slate-400 mt-2 font-medium">Tampilan penuh logo di login, sidebar
+                            & struk</span>
+                    </div>
+                </div>
+
+                <!-- Upload File Gambar Langsung ke Google Drive -->
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-600">Upload Gambar Logo</label>
+                    <input type="file" id="cfg-logo-file-input" accept="image/*" class="hidden"
+                        onchange="handleLogoFileSelected(event)">
+
+                    <button type="button" onclick="document.getElementById('cfg-logo-file-input').click()"
+                        id="btn-upload-logo-trigger"
+                        class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                        <span id="btn-upload-logo-text">Pilih File Logo (Upload Otomatis ke Drive)</span>
+                    </button>
+                    <p class="text-[10px] text-slate-400 text-center">Gambar otomatis disimpan ke Google Drive & diubah
+                        menjadi link Google CDN (<strong>lh3.googleusercontent.com</strong>).</p>
+                </div>
+
+                <form onsubmit="handleSaveConfig(event)" class="space-y-3 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Aplikasi WebApp</label>
+                        <input type="text" id="cfg-app-name" required
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">URL Logo (Google CDN / Direct
+                            Link)</label>
+                        <input type="url" id="cfg-logo-url" required
+                            placeholder="https://lh3.googleusercontent.com/d/..."
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-[11px] focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            oninput="document.getElementById('cfg-logo-preview').src = formatDriveToLh3Url(this.value)">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Perusahaan / Bisnis</label>
+                        <input type="text" id="cfg-company-name" required
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Rekening Pembayaran & QRIS Digital Card (Default Global) -->
+                    <div class="pt-3 border-t border-slate-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-qrcode text-indigo-600"></i>
+                                <span>Barcode QRIS Pembayaran (Default)</span>
+                            </label>
+                            <span
+                                class="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">Google
+                                Drive CDN</span>
+                        </div>
+
+                        <!-- Preview QRIS -->
+                        <div
+                            class="w-full bg-slate-50 border-2 border-dashed border-slate-200 hover:border-indigo-300 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[140px] transition-all relative group overflow-hidden">
+                            <img id="cfg-qris-preview"
+                                src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021126580016ID.CO.QRIS.WWW"
+                                class="w-32 h-32 object-contain mx-auto transition-transform group-hover:scale-105 rounded-xl border border-slate-200 bg-white p-1"
+                                alt="Preview QRIS">
+                            <span class="text-[10px] text-slate-400 mt-1.5 font-medium">Barcode QRIS tampil pada pop-up
+                                kasir POS</span>
+                        </div>
+
+                        <!-- Upload File QRIS Langsung ke Google Drive -->
+                        <div class="space-y-1.5">
+                            <input type="file" id="cfg-qris-file-input" accept="image/*" class="hidden"
+                                onchange="handleQrisFileSelected(event)">
+                            <button type="button" onclick="document.getElementById('cfg-qris-file-input').click()"
+                                id="btn-upload-qris-trigger"
+                                class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                                <span id="btn-upload-qris-text">Upload Foto QRIS ke Google Drive</span>
+                            </button>
+                            <p class="text-[10px] text-slate-400 text-center">Foto otomatis disimpan ke Google Drive &
+                                diubah menjadi link Google CDN (<strong>lh3.googleusercontent.com</strong>).</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">URL Barcode QRIS (Google CDN
+                                / Direct Link)</label>
+                            <input type="url" id="cfg-qris-url" placeholder="https://lh3.googleusercontent.com/d/..."
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-[11px] focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                oninput="document.getElementById('cfg-qris-preview').src = formatDriveToLh3Url(this.value)">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Bank Penerima</label>
+                            <input type="text" id="cfg-bank-name" placeholder="Nama Bank"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Nomor Rekening</label>
+                                <input type="text" id="cfg-bank-acc-no" placeholder="Nomor rekening"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Atas Nama
+                                    Rekening</label>
+                                <input type="text" id="cfg-bank-acc-name" placeholder="Nama pemilik rekening"
+                                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Wilayah Notice Box -->
+                    <div
+                        class="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 text-slate-700 space-y-1.5 mt-2">
+                        <div class="flex items-center gap-2 text-indigo-900 font-bold text-xs">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Prioritas Cabang (Multi-Wilayah)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">
+                            QRIS dan Rekening di atas adalah <strong>Default Global</strong>. Jika suatu cabang di menu
+                            <strong>Master Wilayah</strong> memiliki QRIS/Rekening sendiri, kasir POS akan otomatis
+                            menggunakan data cabang tersebut.
+                        </p>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full mt-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-600/30 transition-all cursor-pointer">
+                        Simpan Semua Pengaturan Sistem
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: User Management Table -->
+        <div id="card-users-pengaturan"
+            class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-indigo-600"></i>
+                    <span id="title-user-management">Daftar Pengguna (Owner, Admin, Sales)</span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-repair-duplicate-users" onclick="repairDuplicateUserIdsPrompt()"
+                        class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                        title="Perbaiki dan rapikan jika ada User ID ganda">
+                        <i class="fa-solid fa-wrench"></i>
+                        <span>Rapikan ID Ganda</span>
+                    </button>
+                    <button type="button" onclick="openModalTambahUser()"
+                        class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Tambah User</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-100">
+                        <tr>
+                            <th onclick="changeTableSort('users', 'User ID')" class="sortable-th p-3">User ID <i
+                                    class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                            <th onclick="changeTableSort('users', 'Username')" class="sortable-th p-3">Username <i
+                                    class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                            <th onclick="changeTableSort('users', 'Nama Lengkap')" class="sortable-th p-3">Nama Lengkap
+                                <i class="fa-solid fa-sort ml-1 text-slate-400"></i>
+                            </th>
+                            <th onclick="changeTableSort('users', 'Role')" class="sortable-th p-3">
+                                Role <i class="fa-solid fa-sort ml-1 text-slate-400"></i></th>
+                            <th class="p-3">Wilayah</th>
+                            <th class="p-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-users-body" class="divide-y divide-slate-100 text-slate-700">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div
+                class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <span id="pagination-info-users" class="text-slate-500 font-medium">Menampilkan 0
+                    data</span>
+                <div class="flex items-center gap-2">
+                    <button id="btn-prev-users" onclick="changeTablePage('users', -1)"
+                        class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Sebelumnya
+                    </button>
+                    <button id="btn-next-users" onclick="changeTablePage('users', 1)"
+                        class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold rounded-xl text-slate-700">
+                        Selanjutnya <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
