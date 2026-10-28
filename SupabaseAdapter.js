@@ -184,20 +184,76 @@ function supabaseFetch_(path, options) {
 
 // ─── 3. OPERASI CRUD SUPABASE ────────────────────────────────────────────────
 
+/**
+ * Mengambil data dari Supabase PostgREST dengan dukungan Auto-Pagination.
+ * Mampu membaca > 1.000 baris secara otomatis dan aman (mengatasi limit default 1000 baris Supabase).
+ */
 function supabaseSelect(table, options) {
   options = options || {};
-  let path = '/rest/v1/' + table + '?select=' + encodeURIComponent(options.select || '*');
+  const targetLimit = (options.limit !== undefined && options.limit !== null) ? Number(options.limit) : null;
+  const startOffset = options.offset ? Number(options.offset) : 0;
+  const PAGE_SIZE = 1000;
 
-  if (options.filters) {
-    for (const col in options.filters) {
-      path += '&' + col + '=' + encodeURIComponent(options.filters[col]);
+  // Tentukan order stabil jika tidak disediakan agar pagination tidak acak/melompat
+  let orderParam = options.order;
+  if (!orderParam && typeof TABLE_MAPPINGS !== 'undefined') {
+    for (const key in TABLE_MAPPINGS) {
+      if (TABLE_MAPPINGS[key] && TABLE_MAPPINGS[key].tableName === table) {
+        orderParam = TABLE_MAPPINGS[key].primaryKey + '.asc';
+        break;
+      }
     }
   }
-  if (options.order) path += '&order=' + encodeURIComponent(options.order);
-  if (options.limit) path += '&limit=' + options.limit;
-  if (options.offset) path += '&offset=' + options.offset;
 
-  return supabaseFetch_(path, { method: 'get' });
+  // Jika limit diminta <= 1000 dan tidak null, cukup 1 kali request
+  if (targetLimit !== null && targetLimit <= PAGE_SIZE) {
+    let path = '/rest/v1/' + table + '?select=' + encodeURIComponent(options.select || '*');
+    if (options.filters) {
+      for (const col in options.filters) {
+        path += '&' + col + '=' + encodeURIComponent(options.filters[col]);
+      }
+    }
+    if (orderParam) path += '&order=' + encodeURIComponent(orderParam);
+    path += '&limit=' + targetLimit;
+    if (startOffset > 0) path += '&offset=' + startOffset;
+
+    const res = supabaseFetch_(path, { method: 'get' });
+    return Array.isArray(res) ? res : [];
+  }
+
+  // Auto-pagination loop untuk mengambil data lengkap (>1000 baris atau seluruh tabel)
+  let allRows = [];
+  let currentOffset = startOffset;
+  const maxToFetch = targetLimit !== null ? targetLimit : Infinity;
+
+  while (allRows.length < maxToFetch) {
+    const fetchLimit = Math.min(PAGE_SIZE, maxToFetch - allRows.length);
+    let path = '/rest/v1/' + table + '?select=' + encodeURIComponent(options.select || '*');
+
+    if (options.filters) {
+      for (const col in options.filters) {
+        path += '&' + col + '=' + encodeURIComponent(options.filters[col]);
+      }
+    }
+    if (orderParam) path += '&order=' + encodeURIComponent(orderParam);
+    path += '&limit=' + fetchLimit;
+    if (currentOffset > 0) path += '&offset=' + currentOffset;
+
+    const chunk = supabaseFetch_(path, { method: 'get' });
+    if (!Array.isArray(chunk) || chunk.length === 0) {
+      break;
+    }
+
+    allRows = allRows.concat(chunk);
+    currentOffset += chunk.length;
+
+    // Jika jumlah data yang didapat lebih sedikit dari yang diminta (fetchLimit), data di server sudah habis
+    if (chunk.length < fetchLimit) {
+      break;
+    }
+  }
+
+  return allRows;
 }
 
 function supabaseInsert(table, payload) {
@@ -652,8 +708,8 @@ function migrateAllSheetsToSupabase() {
       }
 
       const payloads = rows.map(r => mapSheetRowToSupabase(sheetName, r));
-      // Kirim dalam chunk 50 baris agar tidak membebani payload HTTP
-      const chunkSize = 50;
+      // Kirim dalam chunk 200 baris agar 4x lebih cepat dan aman dari batas timeout eksekusi
+      const chunkSize = 200;
       let count = 0;
       for (let i = 0; i < payloads.length; i += chunkSize) {
         const chunk = payloads.slice(i, i + chunkSize);
