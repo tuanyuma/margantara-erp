@@ -1331,10 +1331,54 @@
                             renderAllModules();
                             syncUserPushNotificationTopic();
                             loadDashboardData();
+                            // Auto-fetch sisa outlet secara bertahap sampai END (>1000 data)
+                            autoFetchRemainingOutlets();
                             // Riwayat transaksi dimuat secara lazy saat tab Riwayat dibuka agar refresh awal super cepat
                             setTimeout(function () {
                                 loadActivityNotifications();
                             }, 2500);
+
+        /**
+         * Auto-Pagination Looping Engine:
+         * Menarik data outlet secara bertahap (batch per 1000) sampai habis ke ujung (END)
+         */
+        function autoFetchRemainingOutlets() {
+            if (!AppState.outlet || AppState.outlet.length < 1000) return;
+            if (AppState._isFetchingOutlets) return;
+            AppState._isFetchingOutlets = true;
+
+            var currentOffset = AppState.outlet.length;
+            console.log('[Auto-Pagination] Menarik sisa data outlet dari offset: ' + currentOffset);
+
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(function (res) {
+                        AppState._isFetchingOutlets = false;
+                        if (res && res.success && Array.isArray(res.outlets) && res.outlets.length > 0) {
+                            AppState.outlet = AppState.outlet.concat(res.outlets);
+                            console.log('[Auto-Pagination] Menerima tambahan ' + res.outlets.length + ' outlet. Total: ' + AppState.outlet.length);
+                            renderOutletTable();
+                            if (currentDashDetailType === 'outlet') {
+                                currentDashDetailRows = AppState.outlet;
+                                renderDashboardDetailTable();
+                            }
+                            // Jika batch yang diterima pas 1000, kemungkinan masih ada sisa lagi di belakangnya, lanjutkan loop!
+                            if (res.outlets.length >= 1000) {
+                                setTimeout(autoFetchRemainingOutlets, 300);
+                            }
+                        }
+                    })
+                    .withFailureHandler(function (err) {
+                        AppState._isFetchingOutlets = false;
+                        console.warn('[Auto-Pagination] Selesai / endpoint getOutletsBatch belum aktif:', err);
+                    })
+                    .apiCall('getOutletsBatch', {
+                        offset: currentOffset,
+                        limit: 1000
+                    });
+            }
+        }
+
                         } else {
                             handleInitialDataFailure('Gagal memuat data dari database Google Sheets.');
                         }
@@ -1977,7 +2021,10 @@
             var rows = [].concat(currentDashDetailRows || []);
 
             if (currentDashDetailType === 'outlet' && currentDashDetailFilterStatus !== 'SEMUA') {
-                rows = rows.filter(function (r) { return r.statusVerifikasi === currentDashDetailFilterStatus; });
+                rows = rows.filter(function (r) {
+                    var st = r.statusVerifikasi || r['Status Verifikasi'] || r.status_verifikasi || 'Verified';
+                    return String(st).toLowerCase() === String(currentDashDetailFilterStatus).toLowerCase();
+                });
             }
 
             if (search) {
@@ -2033,14 +2080,21 @@
                 }
 
                 tbody.innerHTML = rows.map(function (o, i) {
-                    var isPending = o.statusVerifikasi === 'Pending';
+                    var kode = o.kodeOutlet || o['Kode Outlet'] || o.kode_outlet || '-';
+                    var namaToko = o.namaToko || o['Nama Toko'] || o.nama_toko || '-';
+                    var namaPemilik = o.namaPemilik || o['Nama Pemilik'] || o.nama_pemilik || '-';
+                    var noHp = o.nomorHp || o['Nomor HP'] || o.nomor_hp || '-';
+                    var wil = o.wilayah || o['Kode Wilayah'] || o.kode_wilayah || '-';
+                    var jadwal = o.hariKunjungan || o['Hari Kunjungan'] || o.hari_kunjungan || 'Setiap Hari';
+                    var stVer = o.statusVerifikasi || o['Status Verifikasi'] || o.status_verifikasi || 'Verified';
+                    var isPending = String(stVer).toLowerCase() === 'pending';
                     return '<tr class="hover:bg-slate-50 transition-colors">' +
                         '<td class="p-3 font-bold text-slate-400">' + (i + 1) + '</td>' +
-                        '<td class="p-3"><p class="font-bold text-slate-900">' + o.namaToko + '</p><p class="text-[10px] font-mono text-slate-500">' + o.kodeOutlet + '</p></td>' +
-                        '<td class="p-3"><p class="font-bold text-slate-800">' + o.namaPemilik + '</p><p class="text-[10px] text-slate-500">' + o.nomorHp + '</p></td>' +
-                        '<td class="p-3 font-bold text-indigo-600">' + o.wilayah + '</td>' +
-                        '<td class="p-3 text-slate-600">' + o.hariKunjungan + '</td>' +
-                        '<td class="p-3 text-center"><span class="px-2.5 py-0.5 rounded-full font-bold text-[10px] ' + (isPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' + o.statusVerifikasi + '</span></td>' +
+                        '<td class="p-3"><p class="font-bold text-slate-900">' + namaToko + '</p><p class="text-[10px] font-mono text-slate-500">' + kode + '</p></td>' +
+                        '<td class="p-3"><p class="font-bold text-slate-800">' + namaPemilik + '</p><p class="text-[10px] text-slate-500">' + noHp + '</p></td>' +
+                        '<td class="p-3 font-bold text-indigo-600">' + wil + '</td>' +
+                        '<td class="p-3 text-slate-600">' + jadwal + '</td>' +
+                        '<td class="p-3 text-center"><span class="px-2.5 py-0.5 rounded-full font-bold text-[10px] ' + (isPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' + (isPending ? 'Pending' : 'Verified') + '</span></td>' +
                         '</tr>';
                 }).join('');
             } else if (currentDashDetailType === 'sales') {
@@ -5079,29 +5133,39 @@
                 tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">Tidak ada outlet yang cocok dengan pencarian/filter.</td></tr>';
             } else {
                 tbody.innerHTML = p.rows.map(function (o) {
-                    var isPending = o['Status Verifikasi'] === 'Pending';
+                    var kode = o['Kode Outlet'] || o.kodeOutlet || o.kode_outlet || '-';
+                    var namaToko = o['Nama Toko'] || o.namaToko || o.nama_toko || '-';
+                    var hariKunjungan = o['Hari Kunjungan'] || o.hariKunjungan || o.hari_kunjungan || 'Setiap Hari';
+                    var namaPemilik = o['Nama Pemilik'] || o.namaPemilik || o.nama_pemilik || '-';
+                    var noHp = o['Nomor HP'] || o.nomorHp || o.nomor_hp || '-';
+                    var wil = o['Kode Wilayah'] || o.wilayah || o.kode_wilayah || '-';
+                    var maps = o['Link Google Maps'] || o.linkGoogleMaps || o.link_google_maps || '';
+                    var radius = o['Radius Meter'] || o.radiusMeter || o.radius_meter || 50;
+                    var absen = o['Bisa Untuk Absensi'] || o.bisaUntukAbsensi || o.bisa_untuk_absensi || 'Tidak';
+                    var stVer = o['Status Verifikasi'] || o.statusVerifikasi || o.status_verifikasi || 'Verified';
+                    var isPending = String(stVer).toLowerCase() === 'pending';
                     return '<tr class="hover:bg-slate-50 transition-colors">' +
-                        '<td class="p-4 font-mono font-bold">' + o['Kode Outlet'] + '</td>' +
+                        '<td class="p-4 font-mono font-bold">' + kode + '</td>' +
                         '<td class="p-4">' +
-                        '<div class="font-bold text-slate-900">' + o['Nama Toko'] + '</div>' +
-                        '<div class="text-[10px] text-indigo-600 font-semibold mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>' + (o['Hari Kunjungan'] || 'Setiap Hari') + '</div>' +
+                        '<div class="font-bold text-slate-900">' + namaToko + '</div>' +
+                        '<div class="text-[10px] text-indigo-600 font-semibold mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>' + hariKunjungan + '</div>' +
                         '</td>' +
-                        '<td class="p-4">' + (o['Nama Pemilik'] || '-') + ' (' + (o['Nomor HP'] || '-') + ')</td>' +
-                        '<td class="p-4">' + o['Kode Wilayah'] + '</td>' +
+                        '<td class="p-4">' + namaPemilik + ' (' + noHp + ')</td>' +
+                        '<td class="p-4">' + wil + '</td>' +
                         '<td class="p-4">' +
-                        (o['Link Google Maps'] && o['Link Google Maps'] !== '-' ? '<a href="' + o['Link Google Maps'] + '" target="_blank" class="text-indigo-600 font-bold hover:underline"><i class="fa-solid fa-location-arrow mr-1"></i>Peta</a>' : '-') +
+                        (maps && maps !== '-' ? '<a href="' + maps + '" target="_blank" class="text-indigo-600 font-bold hover:underline"><i class="fa-solid fa-location-arrow mr-1"></i>Peta</a>' : '-') +
                         '</td>' +
-                        '<td class="p-4">' + (o['Radius Meter'] || 50) + 'm</td>' +
-                        '<td class="p-4"><span class="px-2 py-0.5 rounded-md font-bold text-[10px] ' + (o['Bisa Untuk Absensi'] === 'Ya' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600') + '">' + (o['Bisa Untuk Absensi'] || 'Tidak') + '</span></td>' +
+                        '<td class="p-4">' + radius + 'm</td>' +
+                        '<td class="p-4"><span class="px-2 py-0.5 rounded-md font-bold text-[10px] ' + (absen === 'Ya' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600') + '">' + absen + '</span></td>' +
                         '<td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + (isPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700') + '">' + (isPending ? 'Pending' : 'Verified') + '</span></td>' +
                         '<td class="p-4 text-center">' +
                         '<div class="flex items-center justify-center gap-1.5">' +
                         (isPending && (userRole === 'Admin' || userRole === 'Owner') ?
-                            '<button onclick="verifyOutletPrompt(\'' + o['Kode Outlet'] + '\', \'Verified\')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 rounded-xl text-[11px] font-bold transition-all shadow-2xs" title="Setujui Outlet">' +
+                            '<button onclick="verifyOutletPrompt(\'' + kode + '\', \'Verified\')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 rounded-xl text-[11px] font-bold transition-all shadow-2xs" title="Setujui Outlet">' +
                             '<i class="fa-solid fa-check mr-1"></i>Verifikasi' +
                             '</button>' : '') +
-                        '<button onclick="editOutlet(\'' + o['Kode Outlet'] + '\')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100" title="Edit Data"><i class="fa-solid fa-pen"></i></button>' +
-                        '<button onclick="deleteOutletPrompt(\'' + o['Kode Outlet'] + '\')" class="perm-outlet-admin-only p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="Hapus Outlet"><i class="fa-solid fa-trash"></i></button>' +
+                        '<button onclick="editOutlet(\'' + kode + '\')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100" title="Edit Data"><i class="fa-solid fa-pen"></i></button>' +
+                        '<button onclick="deleteOutletPrompt(\'' + kode + '\')" class="perm-outlet-admin-only p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="Hapus Outlet"><i class="fa-solid fa-trash"></i></button>' +
                         '</div>' +
                         '</td>' +
                         '</tr>';

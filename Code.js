@@ -149,6 +149,8 @@ function executeApiAction(action, payload) {
       return apiGetPublicLoginAccounts();
     case 'getInitialData':
       return apiGetInitialData(payload.userId, payload.role, payload.kodeWilayah);
+    case 'getOutletsBatch':
+      return apiGetOutletsBatch(payload.offset, payload.limit);
     case 'getDashboardData':
       return apiGetDashboardData(payload.filters, payload.userRole, payload.userWilayah);
     
@@ -361,21 +363,7 @@ function apiGetInitialData(userId, role, kodeWilayah) {
       users = getSheetData('USERS') || [];
     }
 
-    // Deteksi otomatis jika ada Kode Outlet duplikat pada OUTLET, langsung rapikan seketika
-    const seenOutletCodes = new Set();
-    let hasDuplicateOutlet = false;
-    for (let i = 0; i < outlet.length; i++) {
-      const oc = String(outlet[i]['Kode Outlet'] || '').trim().toUpperCase();
-      if (seenOutletCodes.has(oc)) {
-        hasDuplicateOutlet = true;
-        break;
-      }
-      if (oc) seenOutletCodes.add(oc);
-    }
-    if (hasDuplicateOutlet) {
-      apiRepairDuplicateOutletCodes();
-      outlet = getSheetData('OUTLET') || [];
-    }
+    // Deteksi duplikat outlet dilakukan secara manual via tombol UI agar load data awal tidak timeout
 
     // Filter outlet jika user memiliki wilayah tertentu (Admin Cabang atau Sales)
     if (role !== 'Owner' && kodeWilayah && kodeWilayah !== 'SEMUA') {
@@ -781,13 +769,13 @@ function apiGetDashboardData(filters, userRole, userWilayah) {
     }));
 
     const outletDetails = filteredOutlet.map(o => ({
-      kodeOutlet: String(o['Kode Outlet'] || '-'),
-      namaToko: String(o['Nama Toko'] || '-'),
-      namaPemilik: String(o['Nama Pemilik'] || '-'),
-      nomorHp: String(o['Nomor HP'] || '-'),
-      wilayah: String(o['Kode Wilayah'] || '-'),
-      hariKunjungan: String(o['Hari Kunjungan'] || 'Setiap Hari'),
-      statusVerifikasi: String(o['Status Verifikasi'] || o['Status'] || '').trim().toLowerCase() === 'pending' ? 'Pending' : 'Verified'
+      kodeOutlet: String(o['Kode Outlet'] || o.kodeOutlet || o.kode_outlet || '-'),
+      namaToko: String(o['Nama Toko'] || o.namaToko || o.nama_toko || '-'),
+      namaPemilik: String(o['Nama Pemilik'] || o.namaPemilik || o.nama_pemilik || '-'),
+      nomorHp: String(o['Nomor HP'] || o.nomorHp || o.nomor_hp || '-'),
+      wilayah: String(o['Kode Wilayah'] || o.wilayah || o.kode_wilayah || '-'),
+      hariKunjungan: String(o['Hari Kunjungan'] || o.hariKunjungan || o.hari_kunjungan || 'Setiap Hari'),
+      statusVerifikasi: String(o['Status Verifikasi'] || o.statusVerifikasi || o.status_verifikasi || o['Status'] || '').trim().toLowerCase() === 'pending' ? 'Pending' : 'Verified'
     }));
 
     const salesDetails = salesUsers.map(s => {
@@ -3969,5 +3957,24 @@ function apiTestFCMPushNotification(payload) {
     };
   } catch (err) {
     return { success: false, message: 'Error tes notifikasi: ' + err.message };
+  }
+}
+
+
+/**
+ * Mengambil data outlet per batch (1000 baris) untuk auto-pagination looping
+ */
+function apiGetOutletsBatch(offset, limit) {
+  try {
+    offset = Number(offset) || 0;
+    limit = Number(limit) || 1000;
+    if (typeof isSupabaseActive === 'function' && isSupabaseActive()) {
+      var chunk = supabaseSelect('outlet', { offset: offset, limit: limit });
+      var mapped = (chunk || []).map(function(row) { return mapSupabaseRowToSheet('OUTLET', row); });
+      return { success: true, outlets: mapped, offset: offset, count: mapped.length };
+    }
+    return { success: true, outlets: [], offset: offset, count: 0 };
+  } catch (e) {
+    return { success: false, message: e.message, outlets: [] };
   }
 }
