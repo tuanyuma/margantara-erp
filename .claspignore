@@ -8,3 +8,4 @@ build.js
 vercel.json
 README.md
 .gitignore
+*.sql

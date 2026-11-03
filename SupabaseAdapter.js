@@ -1,12 +1,16 @@
 /**
  * ==============================================================================
  * SUPABASE ADAPTER & DUAL DATABASE BRIDGE FOR GOOGLE APPS SCRIPT
- * Architecture: apps-script-hybrid-stack (Pattern B: GAS + Supabase)
+ * Standar Arsitektur: Skill /migrasi-to-supabase (Hybrid Pattern)
  * ==============================================================================
- * Keamanan:
- * - Seluruh URL & API Key disimpan secara eksklusif di PropertiesService (Script Properties).
- * - TIDAK ADA penyimpanan kunci rahasia di dalam Google Spreadsheet.
- * - TIDAK ADA hardcode kredensial di dalam kode.
+ * 7 Prinsip Utama:
+ * 1. Skema & Kolom Konsisten dengan Google Sheets.
+ * 2. Client Browser Hanya Membaca (SELECT via RLS). Operasi tulis via GAS (service_role key).
+ * 3. Logika bisnis teruji di Google Apps Script dipertahankan.
+ * 4. Stored Procedure efisien via SQL RPC (reserve_ids, gas_bulk_update, sync_sequences).
+ * 5. Skrip SQL 100% Idempoten (SETUP_SUPABASE.sql).
+ * 6. Kontrak API konsisten: { success, data, message }.
+ * 7. Zero literal secret (Kredensial disimpan di Script Properties).
  * ==============================================================================
  */
 
@@ -14,13 +18,14 @@
 
 /**
  * Mengambil konfigurasi Supabase dari Script Properties.
+ * Mendukung SUPABASE_SERVICE_KEY (standar skill) maupun SUPABASE_KEY.
  * @private
  */
 function getSupabaseConfig_() {
-  const props = PropertiesService.getScriptProperties();
-  const url = String(props.getProperty('SUPABASE_URL') || '').trim().replace(/\/+$/, '');
-  const key = String(props.getProperty('SUPABASE_KEY') || '').trim();
-  const active = String(props.getProperty('SUPABASE_ACTIVE') || 'false').trim().toLowerCase() === 'true';
+  var props = PropertiesService.getScriptProperties();
+  var url = String(props.getProperty('SUPABASE_URL') || '').trim().replace(/\/+$/, '');
+  var key = String(props.getProperty('SUPABASE_SERVICE_KEY') || props.getProperty('SUPABASE_KEY') || '').trim();
+  var active = String(props.getProperty('SUPABASE_ACTIVE') || 'false').trim().toLowerCase() === 'true';
 
   return { url: url, key: key, active: active };
 }
@@ -30,14 +35,14 @@ function getSupabaseConfig_() {
  * @returns {boolean}
  */
 function isSupabaseActive() {
-  const cfg = getSupabaseConfig_();
+  var cfg = getSupabaseConfig_();
   return Boolean(cfg.active && cfg.url && cfg.key);
 }
 
 /**
  * Menyimpan konfigurasi Supabase ke dalam Script Properties (Aman & Terisolasi).
  * @param {string} url - Supabase Project URL (e.g. https://xxx.supabase.co)
- * @param {string} key - Supabase Anon atau Service Role Key
+ * @param {string} key - Supabase Service Role Key (Direkomendasikan) atau Anon Key
  * @returns {{ success: boolean, message: string }}
  */
 function setSupabaseConfig(url, key) {
@@ -45,18 +50,19 @@ function setSupabaseConfig(url, key) {
     throw new Error('URL dan API Key Supabase wajib diisi.');
   }
 
-  const cleanUrl = String(url).trim().replace(/\/+$/, '');
-  const cleanKey = String(key).trim();
+  var cleanUrl = String(url).trim().replace(/\/+$/, '');
+  var cleanKey = String(key).trim();
 
   // Uji koneksi terlebih dahulu sebelum mengaktifkan
-  const test = testSupabaseConnection(cleanUrl, cleanKey);
+  var test = testSupabaseConnection(cleanUrl, cleanKey);
   if (!test.success) {
     throw new Error('Gagal menghubungkan ke Supabase: ' + test.message);
   }
 
-  const props = PropertiesService.getScriptProperties();
+  var props = PropertiesService.getScriptProperties();
   props.setProperties({
     'SUPABASE_URL': cleanUrl,
+    'SUPABASE_SERVICE_KEY': cleanKey,
     'SUPABASE_KEY': cleanKey,
     'SUPABASE_ACTIVE': 'true'
   });
@@ -71,7 +77,7 @@ function setSupabaseConfig(url, key) {
  * Menonaktifkan Supabase dan mengembalikan sistem ke mode Spreadsheet murni.
  */
 function disconnectSupabase() {
-  const props = PropertiesService.getScriptProperties();
+  var props = PropertiesService.getScriptProperties();
   props.setProperty('SUPABASE_ACTIVE', 'false');
   return {
     success: true,
@@ -83,10 +89,10 @@ function disconnectSupabase() {
  * Mengambil status publik koneksi Supabase untuk tampilan UI (Disamarkan/Masked).
  */
 function getSupabasePublicStatus() {
-  const cfg = getSupabaseConfig_();
-  let maskedKey = '';
+  var cfg = getSupabaseConfig_();
+  var maskedKey = '';
   if (cfg.key) {
-    const len = cfg.key.length;
+    var len = cfg.key.length;
     if (len > 12) {
       maskedKey = cfg.key.substring(0, 6) + '••••••••••••' + cfg.key.substring(len - 4);
     } else {
@@ -108,8 +114,8 @@ function getSupabasePublicStatus() {
  */
 function testSupabaseConnection(url, key) {
   try {
-    const targetUrl = url + '/rest/v1/';
-    const response = UrlFetchApp.fetch(targetUrl, {
+    var targetUrl = url + '/rest/v1/';
+    var response = UrlFetchApp.fetch(targetUrl, {
       method: 'get',
       headers: {
         'apikey': key,
@@ -118,14 +124,14 @@ function testSupabaseConnection(url, key) {
       muteHttpExceptions: true
     });
 
-    const code = response.getResponseCode();
+    var code = response.getResponseCode();
     if (code >= 200 && code < 300) {
       return { success: true, message: 'Koneksi aktif (HTTP ' + code + ')' };
     } else {
-      const body = response.getContentText();
-      return { 
-        success: false, 
-        message: 'HTTP ' + code + ': ' + (body.substring(0, 150) || 'Koneksi ditolak') 
+      var body = response.getContentText();
+      return {
+        success: false,
+        message: 'HTTP ' + code + ': ' + (body.substring(0, 150) || 'Koneksi ditolak')
       };
     }
   } catch (err) {
@@ -133,56 +139,72 @@ function testSupabaseConnection(url, key) {
   }
 }
 
-// ─── 2. HTTP REST CLIENT (PostgREST) ──────────────────────────────────────────
+// ─── 2. STANDAR ENGINE SUPA & REST CLIENT ─────────────────────────────────────
 
 /**
- * Eksekusi HTTP Fetch ke Supabase PostgREST.
+ * Engine Inti Standar /migrasi-to-supabase
+ */
+var SUPA = {
+  cfg: function () {
+    var c = getSupabaseConfig_();
+    if (!c.url || !c.key) {
+      throw new Error('SUPABASE_URL / SUPABASE_SERVICE_KEY belum diatur di Script Properties.');
+    }
+    return c;
+  },
+
+  req: function (method, path, body, extra) {
+    var c = this.cfg();
+    var headers = {
+      'apikey': c.key,
+      'Authorization': 'Bearer ' + c.key,
+      'Content-Type': 'application/json'
+    };
+    if (extra) Object.assign(headers, extra);
+
+    var opt = {
+      method: method,
+      headers: headers,
+      muteHttpExceptions: true
+    };
+
+    if (body !== undefined && body !== null) {
+      opt.payload = typeof body === 'string' ? body : JSON.stringify(body);
+    }
+
+    var cleanPath = path.indexOf('http') === 0 ? path : (c.url + '/rest/v1/' + path.replace(/^\/+/, ''));
+    var res = UrlFetchApp.fetch(cleanPath, opt);
+    var code = res.getResponseCode();
+    var text = res.getContentText();
+
+    if (code >= 300) {
+      throw new Error('Supabase Error (' + code + '): ' + text);
+    }
+
+    return { code: code, text: text, json: text ? JSON.parse(text) : null };
+  },
+
+  rpc: function (fn, args) {
+    var r = this.req('post', 'rpc/' + fn, args || {});
+    return r.json !== null ? r.json : (r.text ? JSON.parse(r.text) : null);
+  }
+};
+
+/**
+ * Wrapper HTTP Fetch internal untuk PostgREST.
  * @private
  */
 function supabaseFetch_(path, options) {
-  const cfg = getSupabaseConfig_();
-  if (!cfg.url || !cfg.key) {
-    throw new Error('Supabase belum dikonfigurasi di Script Properties.');
-  }
-
   options = options || {};
-  const fullUrl = cfg.url + path;
+  var extra = {};
+  if (options.prefer) extra['Prefer'] = options.prefer;
+  if (options.headers) Object.assign(extra, options.headers);
 
-  const headers = {
-    'apikey': cfg.key,
-    'Authorization': 'Bearer ' + cfg.key,
-    'Content-Type': 'application/json',
-    'Prefer': options.prefer || 'return=representation'
-  };
-
-  if (options.headers) {
-    for (const h in options.headers) {
-      headers[h] = options.headers[h];
-    }
-  }
-
-  const fetchOptions = {
-    method: options.method || 'get',
-    headers: headers,
-    muteHttpExceptions: true
-  };
-
-  if (options.payload) {
-    fetchOptions.payload = JSON.stringify(options.payload);
-  }
-
-  const response = UrlFetchApp.fetch(fullUrl, fetchOptions);
-  const code = response.getResponseCode();
-  const text = response.getContentText();
-
-  if (code < 200 || code >= 300) {
-    throw new Error('Supabase Error ' + code + ': ' + text);
-  }
-
-  return text ? JSON.parse(text) : null;
+  var r = SUPA.req(options.method || 'get', path, options.payload, extra);
+  return r.json;
 }
 
-// ─── 3. OPERASI CRUD SUPABASE ────────────────────────────────────────────────
+// ─── 3. OPERASI CRUD SUPABASE DENGAN AUTO-PAGINATION ──────────────────────────
 
 /**
  * Mengambil data dari Supabase PostgREST dengan dukungan Auto-Pagination.
@@ -190,14 +212,14 @@ function supabaseFetch_(path, options) {
  */
 function supabaseSelect(table, options) {
   options = options || {};
-  const targetLimit = (options.limit !== undefined && options.limit !== null) ? Number(options.limit) : null;
-  const startOffset = options.offset ? Number(options.offset) : 0;
-  const PAGE_SIZE = 1000;
+  var targetLimit = (options.limit !== undefined && options.limit !== null) ? Number(options.limit) : null;
+  var startOffset = options.offset ? Number(options.offset) : 0;
+  var PAGE_SIZE = 1000;
 
   // Tentukan order stabil jika tidak disediakan agar pagination tidak acak/melompat
-  let orderParam = options.order;
+  var orderParam = options.order;
   if (!orderParam && typeof TABLE_MAPPINGS !== 'undefined') {
-    for (const key in TABLE_MAPPINGS) {
+    for (var key in TABLE_MAPPINGS) {
       if (TABLE_MAPPINGS[key] && TABLE_MAPPINGS[key].tableName === table) {
         orderParam = TABLE_MAPPINGS[key].primaryKey + '.asc';
         break;
@@ -207,9 +229,9 @@ function supabaseSelect(table, options) {
 
   // Jika limit diminta <= 1000 dan tidak null, cukup 1 kali request
   if (targetLimit !== null && targetLimit <= PAGE_SIZE) {
-    let path = '/rest/v1/' + table + '?select=' + encodeURIComponent(options.select || '*');
+    var path = table + '?select=' + encodeURIComponent(options.select || '*');
     if (options.filters) {
-      for (const col in options.filters) {
+      for (var col in options.filters) {
         path += '&' + col + '=' + encodeURIComponent(options.filters[col]);
       }
     }
@@ -217,29 +239,29 @@ function supabaseSelect(table, options) {
     path += '&limit=' + targetLimit;
     if (startOffset > 0) path += '&offset=' + startOffset;
 
-    const res = supabaseFetch_(path, { method: 'get' });
+    var res = supabaseFetch_(path, { method: 'get' });
     return Array.isArray(res) ? res : [];
   }
 
   // Auto-pagination loop untuk mengambil data lengkap (>1000 baris atau seluruh tabel)
-  let allRows = [];
-  let currentOffset = startOffset;
-  const maxToFetch = targetLimit !== null ? targetLimit : Infinity;
+  var allRows = [];
+  var currentOffset = startOffset;
+  var maxToFetch = targetLimit !== null ? targetLimit : Infinity;
 
   while (allRows.length < maxToFetch) {
-    const fetchLimit = Math.min(PAGE_SIZE, maxToFetch - allRows.length);
-    let path = '/rest/v1/' + table + '?select=' + encodeURIComponent(options.select || '*');
+    var fetchLimit = Math.min(PAGE_SIZE, maxToFetch - allRows.length);
+    var p = table + '?select=' + encodeURIComponent(options.select || '*');
 
     if (options.filters) {
-      for (const col in options.filters) {
-        path += '&' + col + '=' + encodeURIComponent(options.filters[col]);
+      for (var c in options.filters) {
+        p += '&' + c + '=' + encodeURIComponent(options.filters[c]);
       }
     }
-    if (orderParam) path += '&order=' + encodeURIComponent(orderParam);
-    path += '&limit=' + fetchLimit;
-    if (currentOffset > 0) path += '&offset=' + currentOffset;
+    if (orderParam) p += '&order=' + encodeURIComponent(orderParam);
+    p += '&limit=' + fetchLimit;
+    if (currentOffset > 0) p += '&offset=' + currentOffset;
 
-    const chunk = supabaseFetch_(path, { method: 'get' });
+    var chunk = supabaseFetch_(p, { method: 'get' });
     if (!Array.isArray(chunk) || chunk.length === 0) {
       break;
     }
@@ -247,7 +269,6 @@ function supabaseSelect(table, options) {
     allRows = allRows.concat(chunk);
     currentOffset += chunk.length;
 
-    // Jika jumlah data yang didapat lebih sedikit dari yang diminta (fetchLimit), data di server sudah habis
     if (chunk.length < fetchLimit) {
       break;
     }
@@ -257,7 +278,7 @@ function supabaseSelect(table, options) {
 }
 
 function supabaseInsert(table, payload) {
-  return supabaseFetch_('/rest/v1/' + table, {
+  return supabaseFetch_(table, {
     method: 'post',
     payload: payload,
     prefer: 'return=representation'
@@ -265,11 +286,11 @@ function supabaseInsert(table, payload) {
 }
 
 function supabaseUpsert(table, payload, onConflict) {
-  const prefer = onConflict
+  var prefer = onConflict
     ? 'resolution=merge-duplicates,return=representation'
     : 'return=representation';
 
-  let path = '/rest/v1/' + table;
+  var path = table;
   if (onConflict) {
     path += '?on_conflict=' + encodeURIComponent(onConflict);
   }
@@ -282,10 +303,10 @@ function supabaseUpsert(table, payload, onConflict) {
 }
 
 function supabaseUpdate(table, payload, filters) {
-  let path = '/rest/v1/' + table + '?';
-  const filterParts = [];
+  var path = table + '?';
+  var filterParts = [];
   if (filters) {
-    for (const col in filters) {
+    for (var col in filters) {
       filterParts.push(col + '=' + encodeURIComponent(filters[col]));
     }
   }
@@ -299,10 +320,10 @@ function supabaseUpdate(table, payload, filters) {
 }
 
 function supabaseDelete(table, filters) {
-  let path = '/rest/v1/' + table + '?';
-  const filterParts = [];
+  var path = table + '?';
+  var filterParts = [];
   if (filters) {
-    for (const col in filters) {
+    for (var col in filters) {
       filterParts.push(col + '=' + encodeURIComponent(filters[col]));
     }
   }
@@ -316,7 +337,7 @@ function supabaseDelete(table, filters) {
 
 // ─── 4. MAPPING SCHEMA: SHEET HEADERS <-> SUPABASE COLUMNS ────────────────────
 
-const TABLE_MAPPINGS = {
+var TABLE_MAPPINGS = {
   'CONFIG': {
     tableName: 'config',
     primaryKey: 'key',
@@ -513,18 +534,23 @@ const TABLE_MAPPINGS = {
  * Konversi objek baris dari format Sheet ke format kolom Supabase.
  */
 function mapSheetRowToSupabase(sheetName, sheetRow) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
   if (!mapping) return sheetRow;
 
-  const result = {};
-  for (const sheetCol in mapping.columns) {
-    const supaCol = mapping.columns[sheetCol];
+  var result = {};
+  for (var sheetCol in mapping.columns) {
+    var supaCol = mapping.columns[sheetCol];
     if (sheetRow[sheetCol] !== undefined) {
-      let val = sheetRow[sheetCol];
+      var val = sheetRow[sheetCol];
       // Format nilai tanggal/null/number
-      if (val === '-' || val === '') {
+      if (val === '-' || val === '' || val === undefined) {
         val = null;
+      } else if (typeof val === 'string') {
+        // Normalisasi nomor telepon
+        if (supaCol === 'nomor_hp' && val.indexOf('+62') === 0) {
+          val = '0' + val.substring(3);
+        }
       }
       result[supaCol] = val;
     }
@@ -536,14 +562,14 @@ function mapSheetRowToSupabase(sheetName, sheetRow) {
  * Konversi objek baris dari Supabase ke format header Google Sheet.
  */
 function mapSupabaseRowToSheet(sheetName, supaRow) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
   if (!mapping) return supaRow;
 
-  const result = {};
-  for (const sheetCol in mapping.columns) {
-    const supaCol = mapping.columns[sheetCol];
-    let val = supaRow[supaCol];
+  var result = {};
+  for (var sheetCol in mapping.columns) {
+    var supaCol = mapping.columns[sheetCol];
+    var val = supaRow[supaCol];
     if (val === null || val === undefined) {
       val = '';
     }
@@ -552,21 +578,82 @@ function mapSupabaseRowToSheet(sheetName, supaRow) {
   return result;
 }
 
-// ─── 5. DUAL-DATABASE HYBRID DATA LAYER ───────────────────────────────────────
+// ─── 5. STANDAR OBJEK DB & RPC HELPERS ────────────────────────────────────────
+
+/**
+ * Objek DB Standar Kompatibilitas Skill /migrasi-to-supabase
+ */
+var DB = {
+  all: function (name) {
+    return dbRead(name);
+  },
+  find: function (name, col, val) {
+    var filt = {};
+    filt[col] = 'eq.' + val;
+    var norm = String(name || '').trim().toUpperCase();
+    var mapping = TABLE_MAPPINGS[norm];
+    if (isSupabaseActive() && mapping) {
+      var rows = supabaseSelect(mapping.tableName, { filters: filt, limit: 1 });
+      return rows && rows.length > 0 ? mapSupabaseRowToSheet(name, rows[0]) : null;
+    }
+    var sheetData = getSheetData(name) || [];
+    return sheetData.find(function (r) { return String(r[col]) === String(val); }) || null;
+  },
+  query: function (name, filt) {
+    return dbRead(name, { filters: filt });
+  },
+  count: function (name, filt) {
+    var norm = String(name || '').trim().toUpperCase();
+    var mapping = TABLE_MAPPINGS[norm];
+    if (isSupabaseActive() && mapping) {
+      var res = supabaseSelect(mapping.tableName, { select: mapping.primaryKey, filters: filt });
+      return res ? res.length : 0;
+    }
+    return (getSheetData(name) || []).length;
+  },
+  appendBatch: function (name, objs) {
+    if (!objs || !objs.length) return;
+    var norm = String(name || '').trim().toUpperCase();
+    var mapping = TABLE_MAPPINGS[norm];
+    if (isSupabaseActive() && mapping) {
+      var payloads = objs.map(function (o) { return mapSheetRowToSupabase(name, o); });
+      SUPA.req('post', encodeURIComponent(mapping.tableName), payloads, { Prefer: 'return=minimal' });
+    }
+  },
+  updateBatch: function (name, keyCol, patches) {
+    var norm = String(name || '').trim().toUpperCase();
+    var mapping = TABLE_MAPPINGS[norm];
+    var table = mapping ? mapping.tableName : name;
+    var pk = mapping && mapping.columns[keyCol] ? mapping.columns[keyCol] : keyCol;
+    return Number(SUPA.rpc('gas_bulk_update', { p_table: table, p_key: pk, p_rows: patches })) || 0;
+  }
+};
+
+/**
+ * Mengambil rentang ID terurut dari database sequence Supabase.
+ */
+function reserveIds_(name, n) {
+  var norm = String(name || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
+  var table = mapping ? mapping.tableName : name;
+  return SUPA.rpc('reserve_ids', { p_table: table, p_n: n || 1 }) || [];
+}
+
+// ─── 6. DUAL-DATABASE HYBRID DATA LAYER ───────────────────────────────────────
 
 /**
  * Membaca data dengan prioritas: Supabase (jika aktif) -> Fallback ke Spreadsheet.
  * Mengembalikan array of objects dengan key header Google Sheet yang identik!
  */
 function dbRead(sheetName, options) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
 
   if (isSupabaseActive() && mapping) {
     try {
-      const supaRows = supabaseSelect(mapping.tableName, options);
+      var supaRows = supabaseSelect(mapping.tableName, options);
       if (Array.isArray(supaRows)) {
-        return supaRows.map(row => mapSupabaseRowToSheet(sheetName, row));
+        return supaRows.map(function (row) { return mapSupabaseRowToSheet(sheetName, row); });
       }
     } catch (e) {
       Logger.log('[Dual-DB Fallback] Gagal membaca Supabase ' + sheetName + ': ' + e.message + '. Beralih ke Google Sheets.');
@@ -583,23 +670,22 @@ function dbRead(sheetName, options) {
  * 2. Mencadangkan (Dual-write) ke Google Sheets
  */
 function dbInsert(sheetName, dataMap) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
 
   // 1. Tulis ke Supabase jika aktif
   if (isSupabaseActive() && mapping) {
     try {
-      const supaPayload = mapSheetRowToSupabase(sheetName, dataMap);
+      var supaPayload = mapSheetRowToSupabase(sheetName, dataMap);
       supabaseInsert(mapping.tableName, supaPayload);
     } catch (e) {
       Logger.log('[Dual-DB] Gagal insert ke Supabase (' + sheetName + '): ' + e.message);
-      // Lanjutkan eksekusi agar backup ke Google Sheet tetap berjalan
     }
   }
 
   // 2. Selalu cadangkan ke Google Sheets
   try {
-    const sheet = getSheetCaseInsensitive(sheetName);
+    var sheet = getSheetCaseInsensitive(sheetName);
     if (sheet) {
       appendRowByHeaderMap(sheet, dataMap);
     }
@@ -612,14 +698,14 @@ function dbInsert(sheetName, dataMap) {
  * Memperbarui baris data (Update) di Supabase dan mencadangkan ke Google Sheets.
  */
 function dbUpdate(sheetName, primaryKeyVal, updateMap) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
 
   // 1. Update ke Supabase
   if (isSupabaseActive() && mapping) {
     try {
-      const supaPayload = mapSheetRowToSupabase(sheetName, updateMap);
-      const filters = {};
+      var supaPayload = mapSheetRowToSupabase(sheetName, updateMap);
+      var filters = {};
       filters[mapping.primaryKey] = 'eq.' + primaryKeyVal;
       supabaseUpdate(mapping.tableName, supaPayload, filters);
     } catch (e) {
@@ -629,11 +715,11 @@ function dbUpdate(sheetName, primaryKeyVal, updateMap) {
 
   // 2. Update di Google Sheet
   try {
-    const sheet = getSheetCaseInsensitive(sheetName);
+    var sheet = getSheetCaseInsensitive(sheetName);
     if (sheet) {
-      const data = getSheetData(sheetName) || [];
-      const pkHeader = mapping ? mapping.sheetPrimaryKey : 'ID';
-      for (let i = 0; i < data.length; i++) {
+      var data = getSheetData(sheetName) || [];
+      var pkHeader = mapping ? mapping.sheetPrimaryKey : 'ID';
+      for (var i = 0; i < data.length; i++) {
         if (String(data[i][pkHeader] || '').trim() === String(primaryKeyVal || '').trim()) {
           updateRowByHeaderMap(sheet, i + 2, updateMap);
           break;
@@ -649,13 +735,13 @@ function dbUpdate(sheetName, primaryKeyVal, updateMap) {
  * Menghapus baris data (Delete) di Supabase dan Google Sheets.
  */
 function dbDelete(sheetName, primaryKeyVal) {
-  const norm = String(sheetName || '').trim().toUpperCase();
-  const mapping = TABLE_MAPPINGS[norm];
+  var norm = String(sheetName || '').trim().toUpperCase();
+  var mapping = TABLE_MAPPINGS[norm];
 
   // 1. Delete dari Supabase
   if (isSupabaseActive() && mapping) {
     try {
-      const filters = {};
+      var filters = {};
       filters[mapping.primaryKey] = 'eq.' + primaryKeyVal;
       supabaseDelete(mapping.tableName, filters);
     } catch (e) {
@@ -665,11 +751,11 @@ function dbDelete(sheetName, primaryKeyVal) {
 
   // 2. Delete dari Google Sheet
   try {
-    const sheet = getSheetCaseInsensitive(sheetName);
+    var sheet = getSheetCaseInsensitive(sheetName);
     if (sheet) {
-      const data = getSheetData(sheetName) || [];
-      const pkHeader = mapping ? mapping.sheetPrimaryKey : 'ID';
-      for (let i = 0; i < data.length; i++) {
+      var data = getSheetData(sheetName) || [];
+      var pkHeader = mapping ? mapping.sheetPrimaryKey : 'ID';
+      for (var i = 0; i < data.length; i++) {
         if (String(data[i][pkHeader] || '').trim() === String(primaryKeyVal || '').trim()) {
           sheet.deleteRow(i + 2);
           delete _executionSheetDataCache[sheet.getName().trim().toUpperCase()];
@@ -682,37 +768,41 @@ function dbDelete(sheetName, primaryKeyVal) {
   }
 }
 
-// ─── 6. TOOL MIGRASI & SINKRONISASI 1-KLIK (Spreadsheet -> Supabase) ──────────
+// ─── 7. TOOL MIGRASI & SINKRONISASI 1-KLIK (Spreadsheet -> Supabase) ──────────
 
 /**
- * Melakukan migrasi seluruh isi Google Sheets saat ini ke Supabase.
- * Cocok dijalankan pertama kali saat baru menghubungkan Supabase.
+ * Fungsi Utama Standar: migrasiSheetsKeSupabase
+ * Sesuai panduan skill /migrasi-to-supabase.
+ * Aman diulang kapan pun (Idempoten via UPSERT & Chunking).
  */
-function migrateAllSheetsToSupabase() {
+function migrasiSheetsKeSupabase() {
   if (!isSupabaseActive()) {
     throw new Error('Supabase belum aktif. Pastikan URL dan API Key telah dikonfigurasi & disimpan.');
   }
 
-  const results = {};
-  const sheetNames = ['CONFIG', 'USERS', 'WILAYAH', 'PRODUK', 'OUTLET', 'ABSENSI', 'KUNJUNGAN', 'TRANSAKSI', 'TRANSAKSI DETAIL', 'STOK_SALES'];
+  var results = {};
+  var sheetNames = [
+    'CONFIG', 'USERS', 'WILAYAH', 'PRODUK', 'OUTLET',
+    'ABSENSI', 'KUNJUNGAN', 'TRANSAKSI', 'TRANSAKSI DETAIL', 'STOK_SALES'
+  ];
 
-  sheetNames.forEach(sheetName => {
-    const mapping = TABLE_MAPPINGS[sheetName];
+  sheetNames.forEach(function (sheetName) {
+    var mapping = TABLE_MAPPINGS[sheetName];
     if (!mapping) return;
 
     try {
-      const rows = getSheetData(sheetName, true) || [];
+      var rows = getSheetData(sheetName, true) || [];
       if (rows.length === 0) {
         results[sheetName] = 0;
         return;
       }
 
-      const payloads = rows.map(r => mapSheetRowToSupabase(sheetName, r));
-      // Kirim dalam chunk 200 baris agar 4x lebih cepat dan aman dari batas timeout eksekusi
-      const chunkSize = 200;
-      let count = 0;
-      for (let i = 0; i < payloads.length; i += chunkSize) {
-        const chunk = payloads.slice(i, i + chunkSize);
+      var payloads = rows.map(function (r) { return mapSheetRowToSupabase(sheetName, r); });
+      // Kirim dalam chunk 200 baris agar aman dari batas timeout eksekusi 6 menit Apps Script
+      var chunkSize = 200;
+      var count = 0;
+      for (var i = 0; i < payloads.length; i += chunkSize) {
+        var chunk = payloads.slice(i, i + chunkSize);
         supabaseUpsert(mapping.tableName, chunk, mapping.primaryKey);
         count += chunk.length;
       }
@@ -723,18 +813,35 @@ function migrateAllSheetsToSupabase() {
     }
   });
 
+  // Sinkronisasi sequences setelah data selesai di-import
+  var syncResult = null;
+  try {
+    syncResult = SUPA.rpc('sync_sequences');
+    Logger.log('[Migration] Sequences disinkronkan: ' + JSON.stringify(syncResult));
+  } catch (errSync) {
+    Logger.log('[Migration] Gagal sync sequences: ' + errSync.message);
+  }
+
   return {
     success: true,
-    message: 'Migrasi data dari Google Sheets ke Supabase selesai!',
-    details: results
+    message: 'Migrasi data dari Google Sheets ke Supabase berhasil diselesaikan!',
+    details: results,
+    sequences: syncResult
   };
 }
 
-// ─── 7. ANTI-PAUSE 6 HARI TRIGGER (KEEP-ALIVE ENGINE) ─────────────────────────
+/**
+ * Alias fungsi untuk kompatibilitas tombol UI lama.
+ */
+function migrateAllSheetsToSupabase() {
+  return migrasiSheetsKeSupabase();
+}
+
+// ─── 8. ANTI-PAUSE 6 HARI TRIGGER (KEEP-ALIVE ENGINE) ─────────────────────────
 
 function setupAntiPauseTrigger() {
-  const triggers = ScriptApp.getProjectTriggers();
-  for (let i = 0; i < triggers.length; i++) {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
     if (triggers[i].getHandlerFunction() === 'pingSupabaseKeepAlive') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
@@ -766,14 +873,14 @@ function pingSupabaseKeepAlive() {
 }
 
 function setSupabaseMode(mode) {
-  const isHybrid = String(mode).toLowerCase() === 'hybrid';
-  const props = PropertiesService.getScriptProperties();
+  var isHybrid = String(mode).toLowerCase() === 'hybrid';
+  var props = PropertiesService.getScriptProperties();
   props.setProperty('SUPABASE_ACTIVE', isHybrid ? 'true' : 'false');
   return {
     success: true,
     active: isHybrid,
-    message: isHybrid 
-      ? 'Mode Hybrid diaktifkan: Supabase Realtime + Sheets Backup' 
+    message: isHybrid
+      ? 'Mode Hybrid diaktifkan: Supabase Realtime + Sheets Backup'
       : 'Mode Standalone diaktifkan: Menggunakan Google Sheets'
   };
 }
